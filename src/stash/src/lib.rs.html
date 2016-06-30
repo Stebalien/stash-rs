@@ -55,6 +55,10 @@
 <span id="11">11</span>
 <span id="12">12</span>
 <span id="13">13</span>
+<span id="14">14</span>
+<span id="15">15</span>
+<span id="16">16</span>
+<span id="17">17</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Stash is a library for efficiently storing maps of keys to values when one</span>
 <span class='doccomment'>//! doesn&#39;t care what the keys are but wants blazing fast `O(1)` insertions,</span>
@@ -62,6 +66,10 @@
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! Common use cases include file descriptor tables, session tables, or MIO</span>
 <span class='doccomment'>//! context tables.</span>
+
+<span class='attribute'>#[<span class='ident'>macro_use</span>]</span>
+<span class='kw'>mod</span> <span class='ident'>iter_macro</span>;
+
 <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>stash</span>;
 <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>unique_stash</span>;
 
