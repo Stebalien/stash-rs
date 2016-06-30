@@ -1,5 +1,5 @@
-mod stash;
-mod ver_stash;
+pub mod stash;
+pub mod unique_stash;
 
 pub use stash::Stash;
-pub use ver_stash::{VerStash, Tag};
+pub use unique_stash::{UniqueStash, Tag};
