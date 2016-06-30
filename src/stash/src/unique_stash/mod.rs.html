@@ -571,7 +571,6 @@
 <span id="527">527</span>
 <span id="528">528</span>
 <span id="529">529</span>
-<span id="530">530</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>vec</span>;
@@ -584,8 +583,7 @@
 
 <span class='kw'>mod</span> <span class='ident'>entry</span>;
 
-<span class='doccomment'>/// A versioned index into a `UniqueStash`. No two calls to `put` on the same</span>
-<span class='doccomment'>/// `UniqueStash` will ever return the same `Tag`.</span>
+<span class='doccomment'>/// A versioned index into a `UniqueStash`.</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Copy</span>, <span class='ident'>Clone</span>, <span class='ident'>Eq</span>, <span class='ident'>PartialEq</span>, <span class='ident'>Ord</span>, <span class='ident'>PartialOrd</span>, <span class='ident'>Hash</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Tag</span> {
     <span class='ident'>idx</span>: <span class='ident'>usize</span>,

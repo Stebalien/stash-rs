@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["stash",""],["unique_stash",""]],"struct":[["Stash","An `O(1)` amortized table that reuses keys."],["Tag","A versioned index into a `UniqueStash`. No two calls to `put` on the same `UniqueStash` will ever return the same `Tag`."],["UniqueStash","An `O(1)` amortized table that does not reuse keys."]]});
+initSidebarItems({"mod":[["stash",""],["unique_stash",""]],"struct":[["Stash","An `O(1)` amortized table that reuses keys."],["Tag","A versioned index into a `UniqueStash`."],["UniqueStash","An `O(1)` amortized table that does not reuse keys."]]});
