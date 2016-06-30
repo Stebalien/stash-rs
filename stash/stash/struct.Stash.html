@@ -153,7 +153,7 @@ puts are expected.</p>
 <p>Returns the index at which this value was stored.</p>
 
 <p><em>Panics</em> if the size of the <code>Stash&lt;V&gt;</code> would overflow <code>usize::MAX</code>.</p>
-</div><h4 id='method.extend' class='method'><code>fn <a href='#method.extend' class='fnname'>extend</a>&lt;I&gt;(&amp;mut self, iter: I) -&gt; <a class='struct' href='../../stash/stash/struct.ExtendIndices.html' title='stash::stash::ExtendIndices'>ExtendIndices</a>&lt;I&gt; <span class='where'>where I: <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/iterator/trait.Iterator.html' title='core::iter::iterator::Iterator'>Iterator</a>&lt;Item=V&gt;</span></code></h4>
+</div><h4 id='method.extend' class='method'><code>fn <a href='#method.extend' class='fnname'>extend</a>&lt;I&gt;(&amp;mut self, iter: I) -&gt; <a class='struct' href='../../stash/stash/struct.Extend.html' title='stash::stash::Extend'>Extend</a>&lt;I&gt; <span class='where'>where I: <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/iterator/trait.Iterator.html' title='core::iter::iterator::Iterator'>Iterator</a>&lt;Item=V&gt;</span></code></h4>
 <div class='docblock'><p>Put all items in the iterator into the stash.</p>
 
 <p>Returns an iterator over the indices where the items were inserted. The

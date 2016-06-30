@@ -504,18 +504,18 @@
 <span class='kw'>mod</span> <span class='ident'>entry</span>;
 <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>entry</span>::<span class='ident'>Entry</span>;
 
-<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>ExtendIndices</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>I</span><span class='op'>&gt;</span> <span class='kw'>where</span> <span class='ident'>I</span>: <span class='ident'>Iterator</span>, <span class='ident'>I</span>::<span class='ident'>Item</span>: <span class='lifetime'>&#39;a</span> {
+<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Extend</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>I</span><span class='op'>&gt;</span> <span class='kw'>where</span> <span class='ident'>I</span>: <span class='ident'>Iterator</span>, <span class='ident'>I</span>::<span class='ident'>Item</span>: <span class='lifetime'>&#39;a</span> {
     <span class='ident'>iter</span>: <span class='ident'>I</span>,
     <span class='ident'>stash</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='kw-2'>mut</span> <span class='ident'>Stash</span><span class='op'>&lt;</span><span class='ident'>I</span>::<span class='ident'>Item</span><span class='op'>&gt;</span>,
 }
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>I</span><span class='op'>&gt;</span> <span class='ident'>Drop</span> <span class='kw'>for</span> <span class='ident'>ExtendIndices</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>I</span><span class='op'>&gt;</span> <span class='kw'>where</span> <span class='ident'>I</span>: <span class='ident'>Iterator</span>, <span class='ident'>I</span>::<span class='ident'>Item</span>: <span class='lifetime'>&#39;a</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>I</span><span class='op'>&gt;</span> <span class='ident'>Drop</span> <span class='kw'>for</span> <span class='ident'>Extend</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>I</span><span class='op'>&gt;</span> <span class='kw'>where</span> <span class='ident'>I</span>: <span class='ident'>Iterator</span>, <span class='ident'>I</span>::<span class='ident'>Item</span>: <span class='lifetime'>&#39;a</span> {
     <span class='kw'>fn</span> <span class='ident'>drop</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) {
         <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='self'>self</span> {}
     }
 }
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>I</span><span class='op'>&gt;</span> <span class='ident'>Iterator</span> <span class='kw'>for</span> <span class='ident'>ExtendIndices</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>I</span><span class='op'>&gt;</span> <span class='kw'>where</span> <span class='ident'>I</span>: <span class='ident'>Iterator</span>, <span class='ident'>I</span>::<span class='ident'>Item</span>: <span class='lifetime'>&#39;a</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>I</span><span class='op'>&gt;</span> <span class='ident'>Iterator</span> <span class='kw'>for</span> <span class='ident'>Extend</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>I</span><span class='op'>&gt;</span> <span class='kw'>where</span> <span class='ident'>I</span>: <span class='ident'>Iterator</span>, <span class='ident'>I</span>::<span class='ident'>Item</span>: <span class='lifetime'>&#39;a</span> {
     <span class='kw'>type</span> <span class='ident'>Item</span> <span class='op'>=</span> <span class='ident'>usize</span>;
 
     <span class='kw'>fn</span> <span class='ident'>next</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>usize</span><span class='op'>&gt;</span> {
@@ -526,12 +526,12 @@
     }
 }
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>I</span><span class='op'>&gt;</span> <span class='ident'>ExactSizeIterator</span> <span class='kw'>for</span> <span class='ident'>ExtendIndices</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>I</span><span class='op'>&gt;</span> <span class='kw'>where</span>
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>I</span><span class='op'>&gt;</span> <span class='ident'>ExactSizeIterator</span> <span class='kw'>for</span> <span class='ident'>Extend</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>I</span><span class='op'>&gt;</span> <span class='kw'>where</span>
     <span class='ident'>I</span>: <span class='ident'>ExactSizeIterator</span>,
     <span class='ident'>I</span>::<span class='ident'>Item</span>: <span class='lifetime'>&#39;a</span>
 { }
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>I</span><span class='op'>&gt;</span> <span class='ident'>DoubleEndedIterator</span> <span class='kw'>for</span> <span class='ident'>ExtendIndices</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>I</span><span class='op'>&gt;</span> <span class='kw'>where</span>
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>I</span><span class='op'>&gt;</span> <span class='ident'>DoubleEndedIterator</span> <span class='kw'>for</span> <span class='ident'>Extend</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>I</span><span class='op'>&gt;</span> <span class='kw'>where</span>
     <span class='ident'>I</span>: <span class='ident'>DoubleEndedIterator</span>,
     <span class='ident'>I</span>::<span class='ident'>Item</span>: <span class='lifetime'>&#39;a</span>
 {
@@ -767,10 +767,10 @@
     <span class='doccomment'>/// items are actually inserted as the Iterator is read. If the returned</span>
     <span class='doccomment'>/// Iterator is dropped, the rest of the items will be inserted all at once.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>extend</span><span class='op'>&lt;</span><span class='ident'>I</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>iter</span>: <span class='ident'>I</span>) <span class='op'>-&gt;</span> <span class='ident'>ExtendIndices</span><span class='op'>&lt;</span><span class='ident'>I</span><span class='op'>&gt;</span> <span class='kw'>where</span> <span class='ident'>I</span>: <span class='ident'>Iterator</span><span class='op'>&lt;</span><span class='ident'>Item</span><span class='op'>=</span><span class='ident'>V</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>extend</span><span class='op'>&lt;</span><span class='ident'>I</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>iter</span>: <span class='ident'>I</span>) <span class='op'>-&gt;</span> <span class='ident'>Extend</span><span class='op'>&lt;</span><span class='ident'>I</span><span class='op'>&gt;</span> <span class='kw'>where</span> <span class='ident'>I</span>: <span class='ident'>Iterator</span><span class='op'>&lt;</span><span class='ident'>Item</span><span class='op'>=</span><span class='ident'>V</span><span class='op'>&gt;</span> {
         <span class='kw'>let</span> (<span class='ident'>lower</span>, _) <span class='op'>=</span> <span class='ident'>iter</span>.<span class='ident'>size_hint</span>();
         <span class='self'>self</span>.<span class='ident'>reserve</span>(<span class='ident'>lower</span>);
-        <span class='ident'>ExtendIndices</span> { <span class='ident'>iter</span>: <span class='ident'>iter</span>, <span class='ident'>stash</span>: <span class='self'>self</span> }
+        <span class='ident'>Extend</span> { <span class='ident'>iter</span>: <span class='ident'>iter</span>, <span class='ident'>stash</span>: <span class='self'>self</span> }
     }
 
     <span class='doccomment'>/// Iterate over the items in this `Stash&lt;V&gt;`.</span>
