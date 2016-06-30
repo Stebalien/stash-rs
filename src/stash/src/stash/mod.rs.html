@@ -574,13 +574,6 @@
 <span id="530">530</span>
 <span id="531">531</span>
 <span id="532">532</span>
-<span id="533">533</span>
-<span id="534">534</span>
-<span id="535">535</span>
-<span id="536">536</span>
-<span id="537">537</span>
-<span id="538">538</span>
-<span id="539">539</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>vec</span>;
@@ -754,16 +747,9 @@
 <span class='macro'>impl_iter</span><span class='macro'>!</span>(<span class='ident'>IterMut</span>, (<span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>V</span><span class='op'>&gt;</span>), (<span class='ident'>usize</span>, <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='kw-2'>mut</span> <span class='ident'>V</span>), <span class='op'>|</span>(<span class='ident'>i</span>, <span class='ident'>entry</span>)<span class='op'>|</span> <span class='ident'>entry</span>.<span class='ident'>full_mut</span>().<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>v</span><span class='op'>|</span> (<span class='ident'>i</span>, <span class='ident'>v</span>)));
 <span class='macro'>impl_iter</span><span class='macro'>!</span>(<span class='ident'>IntoIter</span>, (<span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>), (<span class='ident'>usize</span>, <span class='ident'>V</span>), <span class='op'>|</span>(<span class='ident'>i</span>, <span class='ident'>entry</span>)<span class='op'>|</span> <span class='ident'>entry</span>.<span class='ident'>full</span>().<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>v</span><span class='op'>|</span> (<span class='ident'>i</span>, <span class='ident'>v</span>)));
 
-<span class='doccomment'>/// A `Stash` is a place to put items where you need (amortized) `O(1)`</span>
-<span class='doccomment'>/// insertion, deletion, and lookups but don&#39;t care about the order of the</span>
-<span class='doccomment'>/// items, don&#39;t need to be able to choose the keys, and don&#39;t want to pay the</span>
-<span class='doccomment'>/// overhead of hashing.</span>
+<span class='doccomment'>/// An `O(1)` amortized table that reuses keys.</span>
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// An example use case is a file descriptor table.</span>
-<span class='doccomment'>///</span>
-<span class='doccomment'>/// *Note:* `Stash` will re-use indices of items previously inserted into and</span>
-<span class='doccomment'>/// then removed from the `Stash`. If you need every new item inserted to get a</span>
-<span class='doccomment'>/// new index, use `UniqueStash` instead.</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Stash</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span> {
     <span class='ident'>data</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Entry</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;&gt;</span>,

@@ -47,8 +47,14 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-0' class='srclink' href='../src/stash/src/lib.rs.html#1-7' title='goto source code'>[src]</a></span></h1>
-<h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+               </span><a id='src-0' class='srclink' href='../src/stash/src/lib.rs.html#1-13' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>Stash is a library for efficiently storing maps of keys to values when one
+doesn&#39;t care what the keys are but wants blazing fast <code>O(1)</code> insertions,
+deletions, and lookups.</p>
+
+<p>Common use cases include file descriptor tables, session tables, or MIO
+context tables.</p>
+</div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
 <table>
                        <tr class=' module-item'>
                            <td><a class='mod' href='stash/index.html'
@@ -69,10 +75,7 @@
                            <td><a class='struct' href='struct.Stash.html'
                                   title='stash::Stash'>Stash</a></td>
                            <td class='docblock short'>
-                                <p>A <code>Stash</code> is a place to put items where you need (amortized) <code>O(1)</code>
-insertion, deletion, and lookups but don&#39;t care about the order of the
-items, don&#39;t need to be able to choose the keys, and don&#39;t want to pay the
-overhead of hashing.</p>
+                                <p>An <code>O(1)</code> amortized table that reuses keys.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
@@ -87,10 +90,7 @@ overhead of hashing.</p>
                            <td><a class='struct' href='struct.UniqueStash.html'
                                   title='stash::UniqueStash'>UniqueStash</a></td>
                            <td class='docblock short'>
-                                <p>A <code>UniqueStash</code> is a place to put items where you need (amortized) <code>O(1)</code>
-insertion, deletion, and lookups but don&#39;t care about the order of the
-items, don&#39;t need to be able to choose the keys, don&#39;t want to pay the
-overhead of hashing, and can&#39;t handle key reuse.</p>
+                                <p>An <code>O(1)</code> amortized table that does not reuse keys.</p>
                            </td>
                        </tr></table></section>
     <section id='search' class="content hidden"></section>
