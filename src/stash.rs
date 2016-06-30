@@ -457,6 +457,22 @@ impl<V> Stash<V> {
             _ => None,
         }
     }
+
+    /// Clear the stash
+    pub fn clear(&mut self) {
+        // Do it this way so that nothing bad happens if a destructor panics.
+        for (i, entry) in self.data.iter_mut().enumerate() {
+            // Skip if empty.
+            if let &mut Entry::Empty(_) = entry {
+                continue;
+            }
+            // Drops *then* writes. If drop panics, nothing bad happens (we just
+            // stop clearing.
+            *entry = Entry::Empty(self.next_free);
+            self.next_free = i;
+            self.size -= 1;
+        }
+    }
 }
 
 impl<V> IntoIterator for Stash<V> {

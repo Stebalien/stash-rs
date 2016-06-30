@@ -515,6 +515,25 @@ impl<V> VerStash<V> {
             _ => None,
         }
     }
+
+    /// Clear the VerStash.
+    ///
+    /// Note: This will not cause `Tag`s to be reused.
+    pub fn clear(&mut self) {
+        for (i, item) in self.data.iter_mut().enumerate() {
+            // Skip if empty. We do it this way so that panics on drop don't
+            // mess up the datastructure.
+            if let Entry::Empty(_) = item.entry {
+                continue;
+            }
+            // Drops *then* writes. If drop panics, nothing bad happens (we just
+            // stop clearing.
+            item.entry = Entry::Empty(self.next_free);
+            item.version += 1;
+            self.next_free = i;
+            self.size -= 1;
+        }
+    }
 }
 
 impl<V> IntoIterator for VerStash<V> {
