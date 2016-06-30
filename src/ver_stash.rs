@@ -1,30 +1,113 @@
 use std::fmt;
 use std::vec;
 use std::iter;
-use std::ops;
+use std::ops::{Index, IndexMut};
 use std::slice;
 use std::mem;
 
-pub struct Index {
+/// A versioned index into a `VerStash`. A `VerStash` will never reuse a tag.
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub struct Tag {
     idx: usize,
     ver: u64,
 }
 
-#[repr(u64)]
-enum Entry<V> {
-    Full(V),
-    Empty(usize),
+impl fmt::Debug for Tag {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(self, f)
+    }
 }
 
-// TODO: Use a union so we don't pay for a tag *and* a version...
-struct VerEntry<V> {
-    version: u64,
-    entry: Entry<V>,
+impl fmt::Display for Tag {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}/{}", self.idx, self.ver)
+    }
 }
+
+mod entry {
+    use super::Tag;
+    use self::Entry::*;
+    use std::mem;
+
+    #[derive(Clone)]
+    pub enum Entry<V> {
+        Full(V),
+        Empty(usize),
+    }
+
+    // TODO: Use a union so we don't pay for a tag *and* a version...
+    #[derive(Clone)]
+    pub struct VerEntry<V> {
+        pub version: u64,
+        pub entry: Entry<V>,
+    }
+
+
+    pub fn new<V>(value: V) -> VerEntry<V> {
+        VerEntry {
+            version: 0,
+            entry: Full(value),
+        }
+    }
+
+    pub fn fill<V>(entry: &mut VerEntry<V>, value: V) -> usize {
+        match mem::replace(&mut entry.entry, Full(value)) {
+            Empty(next_free) => next_free,
+            _ => panic!("expected no entry"),
+        }
+    }
+
+    pub fn entry_index_ref<V>((i, entry): (usize, &VerEntry<V>)) -> Option<(Tag, &V)> {
+        let version = entry.version;
+        match entry.entry {
+            Full(ref value) => Some((Tag { idx: i, ver: version }, value)),
+            Empty(_) => None,
+        }
+    }
+
+    pub fn entry_index_mut<V>((i, entry): (usize, &mut VerEntry<V>)) -> Option<(Tag, &mut V)> {
+        let version = entry.version;
+        match entry.entry {
+            Full(ref mut value) => Some((Tag { idx: i, ver: version }, value)),
+            Empty(_) => None,
+        }
+    }
+
+    pub fn entry_index<V>((i, entry): (usize, VerEntry<V>)) -> Option<(Tag, V)> {
+        let version = entry.version;
+        match entry.entry {
+            Full(value) => Some((Tag { idx: i, ver: version }, value)),
+            Empty(_) => None,
+        }
+    }
+
+    pub fn entry_ref<V>(entry: &VerEntry<V>) -> Option<&V> {
+        match entry.entry {
+            Full(ref value) => Some(value),
+            Empty(_) => None,
+        }
+    }
+
+    pub fn entry_mut<V>(entry: &mut VerEntry<V>) -> Option<&mut V> {
+        match entry.entry {
+            Full(ref mut value) => Some(value),
+            Empty(_) => None,
+        }
+    }
+
+    pub fn entry<V>(entry: VerEntry<V>) -> Option<V> {
+        match entry.entry {
+            Full(value) => Some(value),
+            Empty(_) => None,
+        }
+    }
+}
+
+use self::entry::{VerEntry, Entry};
 
 pub struct ExtendIndices<'a, I> where I: Iterator, I::Item: 'a {
     iter: I,
-    stash: &'a mut InfiniteStash<I::Item>,
+    stash: &'a mut VerStash<I::Item>,
 }
 
 impl<'a, I> Drop for ExtendIndices<'a, I> where I: Iterator, I::Item: 'a {
@@ -34,9 +117,9 @@ impl<'a, I> Drop for ExtendIndices<'a, I> where I: Iterator, I::Item: 'a {
 }
 
 impl<'a, I> Iterator for ExtendIndices<'a, I> where I: Iterator, I::Item: 'a {
-    type Item = Index;
+    type Item = Tag;
 
-    fn next(&mut self) -> Option<Index> {
+    fn next(&mut self) -> Option<Tag> {
         self.iter.next().map(|v| self.stash.put(v))
     }
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -53,7 +136,7 @@ impl<'a, I> DoubleEndedIterator for ExtendIndices<'a, I> where
     I: DoubleEndedIterator,
     I::Item: 'a
 {
-    fn next_back(&mut self) -> Option<Index> {
+    fn next_back(&mut self) -> Option<Tag> {
         self.iter.next_back().map(|v| self.stash.put(v))
     }
 }
@@ -141,41 +224,40 @@ macro_rules! impl_iter {
     }
 }
 
-impl_iter!(Values, (<'a, V>), &'a V, VerEntry::<V>::full_ref);
-impl_iter!(ValuesMut, (<'a, V>), &'a mut V, RevEntry::<V>::full_mut);
-impl_iter!(IntoValues, (<V>), V, RevEntry::<V>::full);
+impl_iter!(Values, (<'a, V>), &'a V, entry::entry_ref);
+impl_iter!(ValuesMut, (<'a, V>), &'a mut V, entry::entry_mut);
+impl_iter!(IntoValues, (<V>), V, entry::entry);
 
-impl_iter!(Iter, (<'a, V>), (Index, &'a V), |(i, entry)| entry.full_ref().map(|v| (i, v)));
-
-impl_iter!(IterMut, (<'a, V>), (Index, &'a mut V), |(i, entry)| entry.full_mut().map(|v| (i, v)));
-impl_iter!(IntoIter, (<V>), (Index, V), |(i, entry)| entry.full().map(|v| (i, v)));
+impl_iter!(Iter, (<'a, V>), (Tag, &'a V), entry::entry_index_ref);
+impl_iter!(IterMut, (<'a, V>), (Tag, &'a mut V), entry::entry_index_mut);
+impl_iter!(IntoIter, (<V>), (Tag, V), entry::entry_index);
 
 /// A data structure storing values indexed by tickets.
 #[derive(Clone)]
-pub struct InfiniteStash<V> {
-    data: Vec<RevEntry<V>>,
+pub struct VerStash<V> {
+    data: Vec<VerEntry<V>>,
     size: usize,
     next_free: usize,
 }
 
-impl<V> InfiniteStash<V> {
-    /// Constructs a new, empty `InfiniteStash<T>`.
+impl<V> VerStash<V> {
+    /// Constructs a new, empty `VerStash<T>`.
     ///
     /// The stash will not allocate until elements are put onto it.
     ///
     /// # Examples
     ///
     /// ```
-    /// use stash::InfiniteStash;
+    /// use stash::VerStash;
     ///
-    /// let mut stash: InfiniteStash<i32> = InfiniteStash::new();
+    /// let mut stash: VerStash<i32> = VerStash::new();
     /// ```
     #[inline]
     pub fn new() -> Self {
-        InfiniteStash::with_capacity(0)
+        VerStash::with_capacity(0)
     }
 
-    /// Constructs a new, empty `InfiniteStash<T>` with the specified capacity.
+    /// Constructs a new, empty `VerStash<T>` with the specified capacity.
     ///
     /// The stash will be able to hold exactly `capacity` elements without
     /// reallocating. If `capacity` is 0, the stash will not allocate.
@@ -188,9 +270,9 @@ impl<V> InfiniteStash<V> {
     /// # Examples
     ///
     /// ```
-    /// use stash::InfiniteStash;
+    /// use stash::VerStash;
     ///
-    /// let mut stash: InfiniteStash<i32> = InfiniteStash::with_capacity(10);
+    /// let mut stash: VerStash<i32> = VerStash::with_capacity(10);
     ///
     /// // The stash contains no items, even though it has capacity for more
     /// assert_eq!(stash.len(), 0);
@@ -205,7 +287,7 @@ impl<V> InfiniteStash<V> {
     /// ```
     #[inline]
     pub fn with_capacity(capacity: usize) -> Self {
-        InfiniteStash {
+        VerStash {
             data: Vec::with_capacity(capacity),
             next_free: 0,
             size: 0,
@@ -217,9 +299,9 @@ impl<V> InfiniteStash<V> {
     /// # Examples
     ///
     /// ```
-    /// use stash::InfiniteStash;
+    /// use stash::VerStash;
     ///
-    /// let stash: InfiniteStash<i32> = InfiniteStash::with_capacity(10);
+    /// let stash: VerStash<i32> = VerStash::with_capacity(10);
     /// assert_eq!(stash.capacity(), 10);
     /// ```
     #[inline]
@@ -232,9 +314,9 @@ impl<V> InfiniteStash<V> {
     /// # Examples
     ///
     /// ```
-    /// use stash::InfiniteStash;
+    /// use stash::VerStash;
     ///
-    /// let mut stash = InfiniteStash::new();
+    /// let mut stash = VerStash::new();
     /// assert_eq!(stash.len(), 0);
     /// stash.put("a");
     /// assert_eq!(stash.len(), 1);
@@ -245,7 +327,7 @@ impl<V> InfiniteStash<V> {
     }
 
     /// Reserves capacity for at least `additional` more elements to be put into
-    /// the given `InfiniteStash<T>`. The collection may reserve more space to avoid
+    /// the given `VerStash<T>`. The collection may reserve more space to avoid
     /// frequent reallocations.
     ///
     /// # Panics
@@ -255,9 +337,9 @@ impl<V> InfiniteStash<V> {
     /// # Examples
     ///
     /// ```
-    /// use stash::InfiniteStash;
+    /// use stash::VerStash;
     ///
-    /// let mut stash: InfiniteStash<i32> = InfiniteStash::new();
+    /// let mut stash: VerStash<i32> = VerStash::new();
     /// let t1 = stash.put(1);
     /// stash.reserve(10);
     /// assert!(stash.capacity() >= 11);
@@ -270,7 +352,7 @@ impl<V> InfiniteStash<V> {
     }
 
     /// Reserves the minimum capacity for exactly `additional` more elements to
-    /// be put into the given `InfiniteStash<T>`. Does nothing if the capacity is already
+    /// be put into the given `VerStash<T>`. Does nothing if the capacity is already
     /// sufficient.
     ///
     /// Note that the allocator may give the collection more space than it requests. Therefore
@@ -284,9 +366,9 @@ impl<V> InfiniteStash<V> {
     /// # Examples
     ///
     /// ```
-    /// use stash::InfiniteStash;
+    /// use stash::VerStash;
     ///
-    /// let mut stash: InfiniteStash<i32> = InfiniteStash::new();
+    /// let mut stash: VerStash<i32> = VerStash::new();
     /// let t1 = stash.put(1);
     /// stash.reserve_exact(10);
     /// assert!(stash.capacity() >= 11);
@@ -302,25 +384,27 @@ impl<V> InfiniteStash<V> {
     ///
     /// Returns the index at which this value was stored.
     ///
-    /// *Panics* if the size of the `InfiniteStash<V>` would overflow `usize::MAX`.
-    pub fn put(&mut self, value: V) -> Index {
+    /// *Panics* if the size of the `VerStash<V>` would overflow `usize::MAX`.
+    pub fn put(&mut self, value: V) -> Tag {
         let loc = self.next_free;
         debug_assert!(loc <= self.data.len());
 
-        self.next_free = if self.next_free == self.data.len() {
-            self.data.push(Full(value));
-            self.next_free.checked_add(1).unwrap()
+        let version;
+
+        if self.next_free == self.data.len() {
+            self.data.push(entry::new(value));
+            version = 0;
+            self.next_free += 1;
         } else {
             // Safe because we've recorded that it is safe.
             unsafe {
-                match mem::replace(self.data.get_unchecked_mut(loc), Full(value)) {
-                    Empty(next_free) => next_free,
-                    _ => panic!("expected no entry"),
-                }
+                let entry = self.data.get_unchecked_mut(loc);
+                version = entry.version;
+                self.next_free = entry::fill(entry, value);
             }
-        };
+        }
         self.size += 1;
-        loc
+        Tag { idx: loc, ver: version }
     }
 
     /// Put all items in the iterator into the stash.
@@ -335,7 +419,7 @@ impl<V> InfiniteStash<V> {
         ExtendIndices { iter: iter, stash: self }
     }
 
-    /// Iterate over the items in this `InfiniteStash<V>`.
+    /// Iterate over the items in this `VerStash<V>`.
     ///
     /// Returns an iterator that yields `(index, &value)` pairs.
     #[inline]
@@ -346,7 +430,7 @@ impl<V> InfiniteStash<V> {
         }
     }
 
-    /// Mutably iterate over the items in this `InfiniteStash<V>`.
+    /// Mutably iterate over the items in this `VerStash<V>`.
     ///
     /// Returns an iterator that yields `(index, &mut value)` pairs.
     #[inline]
@@ -357,7 +441,7 @@ impl<V> InfiniteStash<V> {
         }
     }
 
-    /// Iterate over the values in this `InfiniteStash<V>` by reference.
+    /// Iterate over the values in this `VerStash<V>` by reference.
     #[inline]
     pub fn values<'a>(&'a self) -> Values<'a, V> {
         Values {
@@ -366,7 +450,7 @@ impl<V> InfiniteStash<V> {
         }
     }
 
-    /// Mutably iterate over the values in this `InfiniteStash<V>` by reference.
+    /// Mutably iterate over the values in this `VerStash<V>` by reference.
     #[inline]
     pub fn values_mut<'a>(&'a mut self) -> ValuesMut<'a, V> {
         ValuesMut {
@@ -375,7 +459,7 @@ impl<V> InfiniteStash<V> {
         }
     }
 
-    /// Iterate over the values in this `InfiniteStash<V>` by value.
+    /// Iterate over the values in this `VerStash<V>` by value.
     #[inline]
     pub fn into_values(self) -> IntoValues<V> {
         IntoValues {
@@ -384,51 +468,57 @@ impl<V> InfiniteStash<V> {
         }
     }
 
-    /// Check if this `InfiniteStash<V>` is empty.
+    /// Check if this `VerStash<V>` is empty.
     ///
-    /// Returns `true` if this `InfiniteStash<V>` is empty.
+    /// Returns `true` if this `VerStash<V>` is empty.
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.size == 0
     }
 
     /// Take an item from a slot (if non empty).
-    pub fn take(&mut self, index: Index) -> Option<V> {
-        if let Some(entry) = self.data.get_mut(index.idx) {
-            match mem::replace(entry, RevEntry::Empty(self.next_free)) {
-                RevEntry::Full(value) => {
-                    self.next_free = index;
-                    self.size -= 1;
-                    return Some(value);
-                }
-                empty => {
-                    // Just put it back.
-                    *entry = empty
+    pub fn take(&mut self, index: Tag) -> Option<V> {
+        match self.data.get_mut(index.idx) {
+            Some(&mut VerEntry { ref mut version, ref mut entry }) if *version == index.ver => {
+                match mem::replace(entry, Entry::Empty(self.next_free)) {
+                    Entry::Full(value) => {
+                        // Don't bother checking. Won't overflow in any
+                        // reasonable amount of time.
+                        *version += 1;
+                        self.next_free = index.idx;
+                        self.size -= 1;
+                        return Some(value);
+                    }
+                    empty => {
+                        // Just put it back.
+                        *entry = empty;
+                        None
+                    }
                 }
             }
+            _ => None,
         }
-        None
     }
 
     /// Get a reference to the value at `index`.
-    pub fn get(&self, index: usize) -> Option<&V> {
-        match self.data.get(index) {
-            Some(&RevEntry::Full(ref v)) => Some(v),
+    pub fn get(&self, index: Tag) -> Option<&V> {
+        match self.data.get(index.idx) {
+            Some(&VerEntry { version, entry: Entry::Full(ref value) }) if version == index.ver => Some(value),
             _ => None,
         }
     }
 
     /// Get a mutable reference to the value at `index`.
-    pub fn get_mut(&mut self, index: usize) -> Option<&mut V> {
-        match self.data.get_mut(index) {
-            Some(&mut RevEntry::Full(ref mut v)) => Some(v),
+    pub fn get_mut(&mut self, index: Tag) -> Option<&mut V> {
+        match self.data.get_mut(index.idx) {
+            Some(&mut VerEntry { version, entry: Entry::Full(ref mut value) }) if version == index.ver => Some(value),
             _ => None,
         }
     }
 }
 
-impl<V> IntoIterator for InfiniteStash<V> {
-    type Item = (Index, V);
+impl<V> IntoIterator for VerStash<V> {
+    type Item = (Tag, V);
     type IntoIter = IntoIter<V>;
 
     #[inline]
@@ -440,8 +530,8 @@ impl<V> IntoIterator for InfiniteStash<V> {
     }
 }
 
-impl<'a, V> IntoIterator for &'a InfiniteStash<V> {
-    type Item = (Index, &'a V);
+impl<'a, V> IntoIterator for &'a VerStash<V> {
+    type Item = (Tag, &'a V);
     type IntoIter = Iter<'a, V>;
 
     #[inline]
@@ -450,8 +540,8 @@ impl<'a, V> IntoIterator for &'a InfiniteStash<V> {
     }
 }
 
-impl<'a, V> IntoIterator for &'a mut InfiniteStash<V> {
-    type Item = (Index, &'a mut V);
+impl<'a, V> IntoIterator for &'a mut VerStash<V> {
+    type Item = (Tag, &'a mut V);
     type IntoIter = IterMut<'a, V>;
 
     #[inline]
@@ -461,36 +551,31 @@ impl<'a, V> IntoIterator for &'a mut InfiniteStash<V> {
 }
 
 
-impl<V> fmt::Debug for InfiniteStash<V> where V: fmt::Debug {
+impl<V> fmt::Debug for VerStash<V> where V: fmt::Debug {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        try!(write!(f, "["));
-        for (i, v) in self.iter() {
-            if i != 0 { try!(write!(f, ", ")); }
-            try!(write!(f, "{:?}", *v));
-        }
-        write!(f, "]")
+        f.debug_map().entries(self).finish()
     }
 }
 
-impl<'a, V> ops::Index<Index> for InfiniteStash<V> {
+impl<'a, V> Index<Tag> for VerStash<V> {
     type Output = V;
     #[inline]
-    fn index(&self, index: Index) -> &V {
+    fn index(&self, index: Tag) -> &V {
         self.get(index).expect("index out of bounds")
     }
 }
 
-impl<'a, V> ops::IndexMut<Index> for InfiniteStash<V> {
+impl<'a, V> IndexMut<Tag> for VerStash<V> {
     #[inline]
-    fn index_mut(&mut self, index: Index) -> &mut V {
+    fn index_mut(&mut self, index: Tag) -> &mut V {
         self.get_mut(index).expect("index out of bounds")
     }
 }
 
 
-impl<V> Default for InfiniteStash<V> {
+impl<V> Default for VerStash<V> {
     #[inline]
     fn default() -> Self {
-        InfiniteStash::new()
+        VerStash::new()
     }
 }

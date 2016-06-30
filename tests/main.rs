@@ -1,6 +1,4 @@
 extern crate stash;
-
-use std::iter::IntoIterator;
 use stash::*;
 
 #[test]
@@ -8,14 +6,14 @@ fn iter() {
     let mut stash = Stash::new();
     stash.extend(0..2).count();
     {
-        let mut iter = stash.iter();
+        let mut iter = stash.values();
         assert_eq!(iter.next(), Some(&0));
         assert_eq!(iter.next(), Some(&1));
         assert_eq!(iter.next(), None);
     }
 
     {
-        let mut iter = stash.iter_mut();
+        let mut iter = stash.values_mut();
         assert_eq!(iter.next(), Some(&mut 0));
         let it = iter.next().unwrap();
         assert_eq!(it, &mut 1);
@@ -24,7 +22,7 @@ fn iter() {
     }
 
     {
-        let mut iter = stash.into_iter();
+        let mut iter = stash.into_values();
         assert_eq!(iter.next(), Some(0));
         assert_eq!(iter.next(), Some(2));
         assert_eq!(iter.next(), None)

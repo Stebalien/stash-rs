@@ -171,15 +171,15 @@ impl_iter!(IterMut, (<'a, V>), (usize, &'a mut V), |(i, entry)| entry.full_mut()
 impl_iter!(IntoIter, (<V>), (usize, V), |(i, entry)| entry.full().map(|v| (i, v)));
 
 /// A `Stash` is a place to put items where you need (amortized) `O(1)`
-/// insertion, deletion, and lookups but don't care about the order of the items
-/// and don't need to be able to choose the keys.
+/// insertion, deletion, and lookups but don't care about the order of the
+/// items, don't need to be able to choose the keys, and don't want to pay the
+/// overhead of hashing.
 ///
-/// Use Case: You would use a `HashTable` but you don't actually care what the
-/// keys are and you need the constant overhead to be very low.
-
-/// Note: `Stash` will re-use indices of items previously inserted into and then
-/// removed from the `Stash`. If you need every new item inserted to get a new
-/// index, use the `InfiniteStash` type instead (not yet implemented).
+/// An example use case is a file descriptor table.
+///
+/// *Note:* `Stash` will re-use indices of items previously inserted into and
+/// then removed from the `Stash`. If you need every new item inserted to get a
+/// new index, use `VerStash` instead.
 #[derive(Clone)]
 pub struct Stash<V> {
     data: Vec<Entry<V>>,
@@ -495,12 +495,7 @@ impl<'a, V> IntoIterator for &'a mut Stash<V> {
 
 impl<V> fmt::Debug for Stash<V> where V: fmt::Debug {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        try!(write!(f, "["));
-        for (i, v) in self.iter() {
-            if i != 0 { try!(write!(f, ", ")); }
-            try!(write!(f, "{:?}", *v));
-        }
-        write!(f, "]")
+        f.debug_map().entries(self).finish()
     }
 }
 

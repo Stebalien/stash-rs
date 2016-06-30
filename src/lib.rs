@@ -1,5 +1,5 @@
-pub mod stash;
-// pub mod infinite_stash;
+mod stash;
+mod ver_stash;
 
 pub use stash::Stash;
-// pub use infinite_stash::InfiniteStash;
+pub use ver_stash::{VerStash, Tag};
