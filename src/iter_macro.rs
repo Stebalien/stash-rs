@@ -8,12 +8,20 @@ macro_rules! impl_iter {
             impl $($tparm)* Iterator for $name $($tparm)* {
                 type Item = $item;
 
-                fn next(&mut self) -> Option<$item> {
+                fn next(&mut self) -> Option<Self::Item> {
                     let item = (&mut self.inner).filter_map($fun).next();
                     if item.is_some() {
                         self.len -= 1;
                     }
                     item
+                }
+
+                fn count(self) -> usize {
+                    self.len()
+                }
+
+                fn last(mut self) -> Option<Self::Item> {
+                    self.next_back()
                 }
 
                 fn size_hint(&self) -> (usize, Option<usize>) {
@@ -34,7 +42,7 @@ macro_rules! impl_iter {
         impl_iter! {
             @item_identity,
             impl $($tparm)* DoubleEndedIterator for $name $($tparm)* {
-                fn next_back(&mut self) -> Option<$item> {
+                fn next_back(&mut self) -> Option<Self::Item> {
                     let item = (&mut self.inner).rev().filter_map($fun).next();
                     if item.is_some() {
                         self.len -= 1;
