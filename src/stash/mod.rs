@@ -5,42 +5,8 @@ use std::ops::{Index, IndexMut};
 use std::slice;
 use std::mem;
 
-use self::Entry::*;
-
-#[derive(Clone)]
-enum Entry<V> {
-    Empty(usize /* next free index */),
-    Full(V),
-}
-
-impl<V> Entry<V> {
-    /// Take the value if it exists.
-    #[inline]
-    fn full(self) -> Option<V> {
-        match self {
-            Full(value) => Some(value),
-            Empty(_) => None
-        }
-    }
-
-    /// Get an optional reference to the value.
-    #[inline]
-    fn full_ref(&self) -> Option<&V> {
-        match self {
-            &Full(ref value) => Some(value),
-            _ => None
-        }
-    }
-
-    /// Get an optional mutable reference to the value.
-    #[inline]
-    fn full_mut(&mut self) -> Option<&mut V> {
-        match self {
-            &mut Full(ref mut value) => Some(value),
-            _ => None
-        }
-    }
-}
+mod entry;
+use self::entry::Entry;
 
 pub struct ExtendIndices<'a, I> where I: Iterator, I::Item: 'a {
     iter: I,
@@ -114,14 +80,14 @@ pub struct IntoValues<V> {
     len: usize,
 }
 
-impl_iter!(Values, (<'a, V>), &'a V, Entry::<V>::full_ref);
-impl_iter!(ValuesMut, (<'a, V>), &'a mut V, Entry::<V>::full_mut);
-impl_iter!(IntoValues, (<V>), V, Entry::<V>::full);
+impl_iter!(Values, (<'a, V>), &'a V, entry::value_ref);
+impl_iter!(ValuesMut, (<'a, V>), &'a mut V, entry::value_mut);
+impl_iter!(IntoValues, (<V>), V, entry::value);
 
-impl_iter!(Iter, (<'a, V>), (usize, &'a V), |(i, entry)| entry.full_ref().map(|v| (i, v)));
+impl_iter!(Iter, (<'a, V>), (usize, &'a V), entry::value_index_ref);
 
-impl_iter!(IterMut, (<'a, V>), (usize, &'a mut V), |(i, entry)| entry.full_mut().map(|v| (i, v)));
-impl_iter!(IntoIter, (<V>), (usize, V), |(i, entry)| entry.full().map(|v| (i, v)));
+impl_iter!(IterMut, (<'a, V>), (usize, &'a mut V), entry::value_index_mut);
+impl_iter!(IntoIter, (<V>), (usize, V), entry::value_index);
 
 /// An `O(1)` amortized table that reuses keys.
 ///
@@ -284,13 +250,13 @@ impl<V> Stash<V> {
         debug_assert!(loc <= self.data.len());
 
         self.next_free = if self.next_free == self.data.len() {
-            self.data.push(Full(value));
+            self.data.push(Entry::Full(value));
             self.next_free.checked_add(1).unwrap()
         } else {
             // Safe because we've recorded that it is safe.
             unsafe {
-                match mem::replace(self.data.get_unchecked_mut(loc), Full(value)) {
-                    Empty(next_free) => next_free,
+                match mem::replace(self.data.get_unchecked_mut(loc), Entry::Full(value)) {
+                    Entry::Empty(next_free) => next_free,
                     _ => unreachable!()
                 }
             }
