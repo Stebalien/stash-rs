@@ -47,13 +47,15 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-0' class='srclink' href='../src/stash/src/lib.rs.html#1-17' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-0' class='srclink' href='../src/stash/src/lib.rs.html#1-19' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Stash is a library for efficiently storing maps of keys to values when one
-doesn&#39;t care what the keys are but wants blazing fast <code>O(1)</code> insertions,
-deletions, and lookups.</p>
+doesn&#39;t care what the keys are but wants blazing<sup>†</sup> fast <code>O(1)</code>
+insertions, deletions, and lookups.</p>
 
 <p>Common use cases include file descriptor tables, session tables, or MIO
 context tables.</p>
+
+<p><sup>†</sup>Blazing means an order of magnitude faster than hash maps and btree maps.</p>
 </div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
 <table>
                        <tr class=' module-item'>
