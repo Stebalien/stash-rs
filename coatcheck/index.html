@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `coatcheck` crate.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, coatcheck">
+
+    <title>coatcheck - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <section class="sidebar">
+        
+        <p class='location'></p><script>window.sidebarCurrent = {name: 'coatcheck', ty: 'mod', relpath: '../'};</script>
+    </section>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content mod">
+<h1 class='fqn'><span class='in-band'>Crate <a class='mod' href=''>coatcheck</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="#" title="collapse all docs">[-]</a>
+        </span><a id='src-0' class='srclink' href='../src/coatcheck/lib.rs.html#1-710' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'>
+<h1 id="coatcheck" class='section-header'><a
+                           href="#coatcheck">CoatCheck</a></h1>
+<p>CoatCheck is a library for storing values and referencing them by &quot;handles&quot; (<code>Tickets</code>). This
+library is designed to be used where you would otherwise use a hash table but you don&#39;t
+actually need to be able to choose the keys.</p>
+
+<h2 id="advantages-over-a-hash-table:" class='section-header'><a
+                           href="#advantages-over-a-hash-table:">Advantages over a hash table:</a></h2>
+<ol>
+<li>You don&#39;t have to generate your keys.</li>
+<li>CoatCheck is at least 5x faster than the stdlib HashTable for insert/remove operations.</li>
+<li>CoatCheck is about 40x faster for lookup operations.</li>
+</ol>
+
+<h2 id="example" class='section-header'><a
+                           href="#example">Example</a></h2><pre id='rust-example-rendered' class='rust '>
+<span class='kw'>use</span> <span class='ident'>coatcheck</span>::{<span class='ident'>CoatCheck</span>, <span class='ident'>Ticket</span>};
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>convert</span>::<span class='ident'>From</span>;
+
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>cc</span> <span class='op'>=</span> <span class='ident'>CoatCheck</span>::<span class='ident'>new</span>();
+
+<span class='comment'>// Check two values.</span>
+<span class='kw'>let</span> <span class='ident'>ticket1</span> <span class='op'>=</span> <span class='ident'>cc</span>.<span class='ident'>check</span>(<span class='string'>&quot;my value&quot;</span>);
+<span class='kw'>let</span> <span class='ident'>ticket2</span> <span class='op'>=</span> <span class='ident'>cc</span>.<span class='ident'>check</span>(<span class='string'>&quot;my other value&quot;</span>);
+
+<span class='comment'>// Look at the first one.</span>
+<span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;{}&quot;</span>, <span class='ident'>cc</span>[<span class='kw-2'>&amp;</span><span class='ident'>ticket1</span>]);
+
+<span class='comment'>// Claim the second one.</span>
+<span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;{}&quot;</span>, <span class='ident'>cc</span>.<span class='ident'>claim</span>(<span class='ident'>ticket2</span>).<span class='ident'>unwrap</span>());
+
+<span class='comment'>// Claiming again will fail at compile time.</span>
+<span class='comment'>// println!(&quot;{}&quot;, cc.claim(ticket2).unwrap());</span>
+
+<span class='comment'>// Drain the items into a vector.</span>
+<span class='kw'>let</span> <span class='ident'>items</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='ident'>str</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>cc</span>.<span class='ident'>into_iter</span>().<span class='ident'>collect</span>();
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>items</span>[<span class='number'>0</span>], <span class='string'>&quot;my value&quot;</span>);
+
+<span class='comment'>// Create a second coat check:</span>
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>cc2</span>: <span class='ident'>CoatCheck</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='ident'>str</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>CoatCheck</span>::<span class='ident'>new</span>();
+
+<span class='comment'>// `ticket1` was never claimed so let&#39;s try claiming it in this coat check...</span>
+<span class='kw'>let</span> <span class='ident'>ticket</span>: <span class='ident'>Ticket</span> <span class='op'>=</span> <span class='ident'>From</span>::<span class='ident'>from</span>(<span class='ident'>cc2</span>.<span class='ident'>claim</span>(<span class='ident'>ticket1</span>).<span class='ident'>unwrap_err</span>());
+<span class='comment'>// It fails and returns the ticket.</span>
+</pre>
+
+<h2 id="use-case" class='section-header'><a
+                           href="#use-case">Use Case</a></h2>
+<p>For example, let&#39;s say you were implementing a callback system:</p>
+<pre id='rust-example-rendered' class='rust '>
+<span class='kw'>struct</span> <span class='ident'>System</span> {
+    <span class='ident'>callbacks</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>FnMut</span>() <span class='op'>+</span> <span class='lifetime'>&#39;static</span><span class='op'>&gt;&gt;</span>,
+}
+
+<span class='kw'>impl</span> <span class='ident'>System</span> {
+    <span class='kw'>fn</span> <span class='ident'>add_callback</span><span class='op'>&lt;</span><span class='ident'>C</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>cb</span>: <span class='ident'>C</span>) <span class='kw'>where</span> <span class='ident'>C</span>: <span class='ident'>FnMut</span>() <span class='op'>+</span> <span class='lifetime'>&#39;static</span> {
+        <span class='self'>self</span>.<span class='ident'>callbacks</span>.<span class='ident'>push</span>(<span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>cb</span>));
+    }
+    <span class='kw'>fn</span> <span class='ident'>fire</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) {
+        <span class='kw'>for</span> <span class='ident'>cb</span> <span class='kw'>in</span> <span class='self'>self</span>.<span class='ident'>callbacks</span>.<span class='ident'>iter_mut</span>() {
+            (<span class='ident'>cb</span>)();
+        }
+    }
+}
+</pre>
+
+<p>This system works but doesn&#39;t allow unregistering. If you wanted to allow
+unregistering individual callbacks, you could do something like:</p>
+<pre id='rust-example-rendered' class='rust '>
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>HashMap</span>;
+
+<span class='kw'>struct</span> <span class='ident'>System</span> {
+    <span class='ident'>callbacks</span>: <span class='ident'>HashMap</span><span class='op'>&lt;</span><span class='ident'>usize</span>, <span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>FnMut</span>() <span class='op'>+</span> <span class='lifetime'>&#39;static</span><span class='op'>&gt;&gt;</span>,
+    <span class='ident'>next_id</span>: <span class='ident'>usize</span>,
+}
+
+<span class='kw'>struct</span> <span class='ident'>Handle</span> {
+    <span class='ident'>id</span>: <span class='ident'>usize</span>,
+}
+
+<span class='kw'>impl</span> <span class='ident'>System</span> {
+    <span class='kw'>fn</span> <span class='ident'>add_callback</span><span class='op'>&lt;</span><span class='ident'>C</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>cb</span>: <span class='ident'>C</span>) <span class='op'>-&gt;</span> <span class='ident'>Handle</span> <span class='kw'>where</span> <span class='ident'>C</span>: <span class='ident'>FnMut</span>() <span class='op'>+</span> <span class='lifetime'>&#39;static</span> {
+        <span class='kw'>let</span> <span class='ident'>id</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>next_id</span>;
+        <span class='self'>self</span>.<span class='ident'>next_id</span> <span class='op'>+=</span> <span class='number'>1</span>;
+        <span class='self'>self</span>.<span class='ident'>callbacks</span>.<span class='ident'>insert</span>(<span class='ident'>id</span>, <span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>cb</span>));
+        <span class='ident'>Handle</span> { <span class='ident'>id</span>: <span class='ident'>id</span> }
+    }
+    <span class='kw'>fn</span> <span class='ident'>fire</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) {
+        <span class='kw'>for</span> (_, <span class='ident'>cb</span>) <span class='kw'>in</span> <span class='self'>self</span>.<span class='ident'>callbacks</span>.<span class='ident'>iter_mut</span>() {
+            (<span class='ident'>cb</span>)();
+        }
+    }
+    <span class='kw'>fn</span> <span class='ident'>remove_callback</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>handle</span>: <span class='ident'>Handle</span>) {
+        <span class='self'>self</span>.<span class='ident'>callbacks</span>.<span class='ident'>remove</span>(<span class='kw-2'>&amp;</span><span class='ident'>handle</span>.<span class='ident'>id</span>);
+    }
+}
+</pre>
+
+<p>However, we don&#39;t REALLY need a hash table because we don&#39;t care about the keys.</p>
+
+<p>This is where this library comes in. It acts like the above system <em>but</em> takes advantage of the
+fact that it can choose the IDs:</p>
+<pre id='rust-example-rendered' class='rust '>
+<span class='kw'>use</span> <span class='ident'>coatcheck</span>::{<span class='ident'>CoatCheck</span>, <span class='ident'>Ticket</span>};
+
+<span class='kw'>struct</span> <span class='ident'>System</span> {
+    <span class='ident'>callbacks</span>: <span class='ident'>CoatCheck</span><span class='op'>&lt;</span><span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>FnMut</span>() <span class='op'>+</span> <span class='lifetime'>&#39;static</span><span class='op'>&gt;&gt;</span>,
+}
+
+<span class='kw'>struct</span> <span class='ident'>Handle</span> {
+    <span class='ident'>ticket</span>: <span class='ident'>Ticket</span>, <span class='comment'>// Wrap it for type safety</span>
+}
+
+<span class='kw'>impl</span> <span class='ident'>System</span> {
+    <span class='kw'>fn</span> <span class='ident'>add_callback</span><span class='op'>&lt;</span><span class='ident'>C</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>cb</span>: <span class='ident'>C</span>) <span class='op'>-&gt;</span> <span class='ident'>Handle</span> <span class='kw'>where</span> <span class='ident'>C</span>: <span class='ident'>FnMut</span>() <span class='op'>+</span> <span class='lifetime'>&#39;static</span> {
+        <span class='ident'>Handle</span> { <span class='ident'>ticket</span>: <span class='self'>self</span>.<span class='ident'>callbacks</span>.<span class='ident'>check</span>(<span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>cb</span>)) }
+    }
+    <span class='kw'>fn</span> <span class='ident'>remove_callback</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>handle</span>: <span class='ident'>Handle</span>) {
+        <span class='self'>self</span>.<span class='ident'>callbacks</span>.<span class='ident'>claim</span>(<span class='ident'>handle</span>.<span class='ident'>ticket</span>);
+    }
+    <span class='kw'>fn</span> <span class='ident'>fire</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) {
+        <span class='kw'>for</span> <span class='ident'>cb</span> <span class='kw'>in</span> <span class='self'>self</span>.<span class='ident'>callbacks</span>.<span class='ident'>iter_mut</span>() {
+            (<span class='op'>*</span><span class='ident'>cb</span>)();
+        }
+    }
+}
+</pre>
+
+<h2 id="discussion" class='section-header'><a
+                           href="#discussion">Discussion</a></h2>
+<p>One thing you might note when using this library is that Tickets can&#39;t be duplicated in any way.</p>
+
+<h3 id="pros:" class='section-header'><a
+                           href="#pros:">Pros:</a></h3>
+<ul>
+<li><p>Ownership: Preventing duplication of the ticket preserves ownership of the
+value to an extent. The value can still be stolen by destroying the
+CoatCheck but that&#39;s the only way to get it out without the ticket.</p></li>
+<li><p>Safety: As long as you use the ticket in the right coat check, the index
+operator will never panic.</p></li>
+<li><p>Size: If I allowed ticket copying, I&#39;d need to store a &quot;generation&quot; in every ticket and
+along side the ticket&#39;s associated value to be able to distinguish between an old ticket and
+a new one. Currently, I can get away with reusing tickets because they must be turned in
+before freeing a slot.</p></li>
+</ul>
+
+<h3 id="cons:" class='section-header'><a
+                           href="#cons:">Cons:</a></h3>
+<ul>
+<li>Multiple references: There&#39;s no way to give away a reference to a value
+(without using actual references, that is).</li>
+</ul>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.AccessError.html'
+                               title='coatcheck::AccessError'>AccessError</a></td>
+                        <td class='docblock short'>
+                             <p>The error yielded an access fails.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.ClaimError.html'
+                               title='coatcheck::ClaimError'>ClaimError</a></td>
+                        <td class='docblock short'>
+                             <p>The error yielded when a claim fails.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.CoatCheck.html'
+                               title='coatcheck::CoatCheck'>CoatCheck</a></td>
+                        <td class='docblock short'>
+                             <p>A data structure storing values indexed by tickets.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Ticket.html'
+                               title='coatcheck::Ticket'>Ticket</a></td>
+                        <td class='docblock short'>
+                             <p>A <code>Ticket</code> is an opaque data structure that can be used to claim the associated value.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Tickets.html'
+                               title='coatcheck::Tickets'>Tickets</a></td>
+                        <td class='docblock short'>
+                             <p>Iterator that checks-in values in exchange for tickets.</p>
+
+                        </td>
+                    </tr>
+                </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='enum' href='enum.ErrorKind.html'
+                               title='coatcheck::ErrorKind'>ErrorKind</a></td>
+                        <td class='docblock short'>
+                             <p>Coat check error types</p>
+
+                        </td>
+                    </tr>
+                </table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <div id="help" class="hidden">
+        <div class="shortcuts">
+            <h1>Keyboard shortcuts</h1>
+            <dl>
+                <dt>?</dt>
+                <dd>Show this help dialog</dd>
+                <dt>S</dt>
+                <dd>Focus the search field</dd>
+                <dt>&larrb;</dt>
+                <dd>Move up in search results</dd>
+                <dt>&rarrb;</dt>
+                <dd>Move down in search results</dd>
+                <dt>&#9166;</dt>
+                <dd>Go to active search result</dd>
+            </dl>
+        </div>
+        <div class="infos">
+            <h1>Search tricks</h1>
+            <p>
+                Prefix searches with a type followed by a colon (e.g.
+                <code>fn:</code>) to restrict the search to a given type.
+            </p>
+            <p>
+                Accepted types are: <code>fn</code>, <code>mod</code>,
+                <code>struct</code>, <code>enum</code>,
+                <code>trait</code>, <code>typedef</code> (or
+                <code>tdef</code>).
+            </p>
+        </div>
+    </div>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "coatcheck";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script async src="../search-index.js"></script>
+</body>
+</html>
