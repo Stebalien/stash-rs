@@ -4,6 +4,10 @@
 //!
 //! Common use cases include file descriptor tables, session tables, or MIO
 //! context tables.
+
+#[macro_use]
+mod iter_macro;
+
 pub mod stash;
 pub mod unique_stash;
 

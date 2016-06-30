@@ -101,53 +101,6 @@ pub struct IntoValues<V> {
     len: usize,
 }
 
-macro_rules! item_identity {
-    ($it:item) => {
-        $it
-    }
-}
-
-macro_rules! impl_iter {
-    ($name:ident, ($($tparm:tt)*), $item:ty, $fun:expr) => {
-        item_identity! {
-            impl $($tparm)* Iterator for $name $($tparm)* {
-                type Item = $item;
-
-                fn next(&mut self) -> Option<$item> {
-                    let item = (&mut self.inner).filter_map($fun).next();
-                    if item.is_some() {
-                        self.len -= 1;
-                    }
-                    item
-                }
-                fn size_hint(&self) -> (usize, Option<usize>) {
-                    (self.len, Some(self.len))
-                }
-            }
-        }
-
-        item_identity! {
-            impl $($tparm)* ExactSizeIterator for $name $($tparm)* {
-                fn len(&self) -> usize {
-                    self.len
-                }
-            }
-        }
-
-        item_identity! {
-            impl $($tparm)* DoubleEndedIterator for $name $($tparm)* {
-                fn next_back(&mut self) -> Option<$item> {
-                    let item = (&mut self.inner).rev().filter_map($fun).next();
-                    if item.is_some() {
-                        self.len -= 1;
-                    }
-                    item
-                }
-            }
-        }
-    }
-}
-
 impl_iter!(Values, (<'a, V>), &'a V, entry::value_ref);
 impl_iter!(ValuesMut, (<'a, V>), &'a mut V, entry::value_mut);
 impl_iter!(IntoValues, (<V>), V, entry::value);
