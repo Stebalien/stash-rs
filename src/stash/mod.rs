@@ -8,18 +8,18 @@ use std::mem;
 mod entry;
 use self::entry::Entry;
 
-pub struct ExtendIndices<'a, I> where I: Iterator, I::Item: 'a {
+pub struct Extend<'a, I> where I: Iterator, I::Item: 'a {
     iter: I,
     stash: &'a mut Stash<I::Item>,
 }
 
-impl<'a, I> Drop for ExtendIndices<'a, I> where I: Iterator, I::Item: 'a {
+impl<'a, I> Drop for Extend<'a, I> where I: Iterator, I::Item: 'a {
     fn drop(&mut self) {
         for _ in self {}
     }
 }
 
-impl<'a, I> Iterator for ExtendIndices<'a, I> where I: Iterator, I::Item: 'a {
+impl<'a, I> Iterator for Extend<'a, I> where I: Iterator, I::Item: 'a {
     type Item = usize;
 
     fn next(&mut self) -> Option<usize> {
@@ -30,12 +30,12 @@ impl<'a, I> Iterator for ExtendIndices<'a, I> where I: Iterator, I::Item: 'a {
     }
 }
 
-impl<'a, I> ExactSizeIterator for ExtendIndices<'a, I> where
+impl<'a, I> ExactSizeIterator for Extend<'a, I> where
     I: ExactSizeIterator,
     I::Item: 'a
 { }
 
-impl<'a, I> DoubleEndedIterator for ExtendIndices<'a, I> where
+impl<'a, I> DoubleEndedIterator for Extend<'a, I> where
     I: DoubleEndedIterator,
     I::Item: 'a
 {
@@ -271,10 +271,10 @@ impl<V> Stash<V> {
     /// items are actually inserted as the Iterator is read. If the returned
     /// Iterator is dropped, the rest of the items will be inserted all at once.
     #[inline]
-    pub fn extend<I>(&mut self, iter: I) -> ExtendIndices<I> where I: Iterator<Item=V> {
+    pub fn extend<I>(&mut self, iter: I) -> Extend<I> where I: Iterator<Item=V> {
         let (lower, _) = iter.size_hint();
         self.reserve(lower);
-        ExtendIndices { iter: iter, stash: self }
+        Extend { iter: iter, stash: self }
     }
 
     /// Iterate over the items in this `Stash<V>`.
