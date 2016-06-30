@@ -9,8 +9,7 @@ use self::entry::{VerEntry, Entry};
 
 mod entry;
 
-/// A versioned index into a `UniqueStash`. No two calls to `put` on the same
-/// `UniqueStash` will ever return the same `Tag`.
+/// A versioned index into a `UniqueStash`.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct Tag {
     idx: usize,
@@ -157,10 +156,11 @@ impl_iter!(Iter, (<'a, V>), (Tag, &'a V), entry::value_index_ref);
 impl_iter!(IterMut, (<'a, V>), (Tag, &'a mut V), entry::value_index_mut);
 impl_iter!(IntoIter, (<V>), (Tag, V), entry::value_index);
 
-/// A `UniqueStash` is a place to put items where you need (amortized) `O(1)`
-/// insertion, deletion, and lookups but don't care about the order of the
-/// items, don't need to be able to choose the keys, don't want to pay the
-/// overhead of hashing, and can't handle key reuse.
+/// An `O(1)` amortized table that does not reuse keys.
+///
+/// Guarantee: No two calls to `put` on the same `UniqueStash` will ever return the same `Key`.
+///
+/// An example use case is a file descriptor table.
 ///
 /// An example use case is a session table where expired session IDs should
 /// never be re-used.

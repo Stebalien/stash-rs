@@ -170,16 +170,9 @@ impl_iter!(Iter, (<'a, V>), (usize, &'a V), |(i, entry)| entry.full_ref().map(|v
 impl_iter!(IterMut, (<'a, V>), (usize, &'a mut V), |(i, entry)| entry.full_mut().map(|v| (i, v)));
 impl_iter!(IntoIter, (<V>), (usize, V), |(i, entry)| entry.full().map(|v| (i, v)));
 
-/// A `Stash` is a place to put items where you need (amortized) `O(1)`
-/// insertion, deletion, and lookups but don't care about the order of the
-/// items, don't need to be able to choose the keys, and don't want to pay the
-/// overhead of hashing.
+/// An `O(1)` amortized table that reuses keys.
 ///
 /// An example use case is a file descriptor table.
-///
-/// *Note:* `Stash` will re-use indices of items previously inserted into and
-/// then removed from the `Stash`. If you need every new item inserted to get a
-/// new index, use `UniqueStash` instead.
 #[derive(Clone)]
 pub struct Stash<V> {
     data: Vec<Entry<V>>,
