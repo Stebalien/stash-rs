@@ -1,5 +1,13 @@
 [package]
 
 name = "stash"
+keywords = ["data-structures"]
 version = "0.0.1"
 authors = ["Steven Allen <steven@stebalien.com>"]
+
+homepage = "https://github.com/Stebalien/stash-rs"
+repository = "https://github.com/Stebalien/stash-rs"
+documentation = "https://stebalien.github.io/stash-rs/stash/"
+readme = "README.md"
+
+license = "MIT/Apache-2.0"
