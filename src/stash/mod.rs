@@ -8,18 +8,27 @@ use std::mem;
 mod entry;
 use self::entry::Entry;
 
-pub struct Extend<'a, I> where I: Iterator, I::Item: 'a {
+pub struct Extend<'a, I>
+    where I: Iterator,
+          I::Item: 'a
+{
     iter: I,
     stash: &'a mut Stash<I::Item>,
 }
 
-impl<'a, I> Drop for Extend<'a, I> where I: Iterator, I::Item: 'a {
+impl<'a, I> Drop for Extend<'a, I>
+    where I: Iterator,
+          I::Item: 'a
+{
     fn drop(&mut self) {
         for _ in self {}
     }
 }
 
-impl<'a, I> Iterator for Extend<'a, I> where I: Iterator, I::Item: 'a {
+impl<'a, I> Iterator for Extend<'a, I>
+    where I: Iterator,
+          I::Item: 'a
+{
     type Item = usize;
 
     fn next(&mut self) -> Option<usize> {
@@ -30,14 +39,15 @@ impl<'a, I> Iterator for Extend<'a, I> where I: Iterator, I::Item: 'a {
     }
 }
 
-impl<'a, I> ExactSizeIterator for Extend<'a, I> where
-    I: ExactSizeIterator,
-    I::Item: 'a
-{ }
+impl<'a, I> ExactSizeIterator for Extend<'a, I>
+    where I: ExactSizeIterator,
+          I::Item: 'a
+{
+}
 
-impl<'a, I> DoubleEndedIterator for Extend<'a, I> where
-    I: DoubleEndedIterator,
-    I::Item: 'a
+impl<'a, I> DoubleEndedIterator for Extend<'a, I>
+    where I: DoubleEndedIterator,
+          I::Item: 'a
 {
     fn next_back(&mut self) -> Option<usize> {
         self.iter.next_back().map(|v| self.stash.put(v))
@@ -232,7 +242,7 @@ impl<V> Stash<V> {
     /// stash.reserve_exact(10);
     /// assert!(stash.capacity() >= 11);
     /// ```
-    pub fn reserve_exact(&mut self, additional: usize){
+    pub fn reserve_exact(&mut self, additional: usize) {
         let extra_space = self.data.len() - self.len();
         if extra_space < additional {
             self.data.reserve_exact(additional - extra_space)
@@ -257,7 +267,7 @@ impl<V> Stash<V> {
             unsafe {
                 match mem::replace(self.data.get_unchecked_mut(loc), Entry::Full(value)) {
                     Entry::Empty(next_free) => next_free,
-                    _ => unreachable!()
+                    _ => unreachable!(),
                 }
             }
         };
@@ -271,10 +281,15 @@ impl<V> Stash<V> {
     /// items are actually inserted as the Iterator is read. If the returned
     /// Iterator is dropped, the rest of the items will be inserted all at once.
     #[inline]
-    pub fn extend<I>(&mut self, iter: I) -> Extend<I> where I: Iterator<Item=V> {
+    pub fn extend<I>(&mut self, iter: I) -> Extend<I>
+        where I: Iterator<Item = V>
+    {
         let (lower, _) = iter.size_hint();
         self.reserve(lower);
-        Extend { iter: iter, stash: self }
+        Extend {
+            iter: iter,
+            stash: self,
+        }
     }
 
     /// Iterate over the items in this `Stash<V>`.
@@ -421,7 +436,9 @@ impl<'a, V> IntoIterator for &'a mut Stash<V> {
 }
 
 
-impl<V> fmt::Debug for Stash<V> where V: fmt::Debug {
+impl<V> fmt::Debug for Stash<V>
+    where V: fmt::Debug
+{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_map().entries(self).finish()
     }

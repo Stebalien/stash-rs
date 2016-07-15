@@ -10,7 +10,7 @@ use self::Entry::*;
 pub fn value<V>(entry: Entry<V>) -> Option<V> {
     match entry {
         Full(value) => Some(value),
-        Empty(_) => None
+        Empty(_) => None,
     }
 }
 
@@ -18,7 +18,7 @@ pub fn value<V>(entry: Entry<V>) -> Option<V> {
 pub fn value_ref<V>(entry: &Entry<V>) -> Option<&V> {
     match *entry {
         Full(ref value) => Some(value),
-        _ => None
+        _ => None,
     }
 }
 
@@ -26,7 +26,7 @@ pub fn value_ref<V>(entry: &Entry<V>) -> Option<&V> {
 pub fn value_mut<V>(entry: &mut Entry<V>) -> Option<&mut V> {
     match *entry {
         Full(ref mut value) => Some(value),
-        _ => None
+        _ => None,
     }
 }
 
