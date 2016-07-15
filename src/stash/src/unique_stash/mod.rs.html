@@ -832,7 +832,7 @@
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// Returns an iterator that yields `(index, &amp;value)` pairs.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>iter</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Iter</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>V</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>iter</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Iter</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span> {
         <span class='ident'>Iter</span> {
             <span class='ident'>len</span>: <span class='self'>self</span>.<span class='ident'>len</span>(),
             <span class='ident'>inner</span>: <span class='self'>self</span>.<span class='ident'>data</span>.<span class='ident'>iter</span>().<span class='ident'>enumerate</span>(),
@@ -843,7 +843,7 @@
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// Returns an iterator that yields `(index, &amp;mut value)` pairs.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>iter_mut</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>IterMut</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>V</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>iter_mut</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>IterMut</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span> {
         <span class='ident'>IterMut</span> {
             <span class='ident'>len</span>: <span class='self'>self</span>.<span class='ident'>len</span>(),
             <span class='ident'>inner</span>: <span class='self'>self</span>.<span class='ident'>data</span>.<span class='ident'>iter_mut</span>().<span class='ident'>enumerate</span>(),
@@ -852,7 +852,7 @@
 
     <span class='doccomment'>/// Iterate over the values in this `UniqueStash&lt;V&gt;` by reference.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>values</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Values</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>V</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>values</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Values</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span> {
         <span class='ident'>Values</span> {
             <span class='ident'>len</span>: <span class='self'>self</span>.<span class='ident'>len</span>(),
             <span class='ident'>inner</span>: <span class='self'>self</span>.<span class='ident'>data</span>.<span class='ident'>iter</span>(),
@@ -861,7 +861,7 @@
 
     <span class='doccomment'>/// Mutably iterate over the values in this `UniqueStash&lt;V&gt;` by reference.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>values_mut</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>ValuesMut</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>V</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>values_mut</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>ValuesMut</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span> {
         <span class='ident'>ValuesMut</span> {
             <span class='ident'>len</span>: <span class='self'>self</span>.<span class='ident'>len</span>(),
             <span class='ident'>inner</span>: <span class='self'>self</span>.<span class='ident'>data</span>.<span class='ident'>iter_mut</span>(),
@@ -896,7 +896,7 @@
                         <span class='op'>*</span><span class='ident'>version</span> <span class='op'>+=</span> <span class='number'>1</span>;
                         <span class='self'>self</span>.<span class='ident'>next_free</span> <span class='op'>=</span> <span class='ident'>index</span>.<span class='ident'>idx</span>;
                         <span class='self'>self</span>.<span class='ident'>size</span> <span class='op'>-=</span> <span class='number'>1</span>;
-                        <span class='kw'>return</span> <span class='prelude-val'>Some</span>(<span class='ident'>value</span>);
+                        <span class='prelude-val'>Some</span>(<span class='ident'>value</span>)
                     }
                     <span class='ident'>empty</span> <span class='op'>=&gt;</span> {
                         <span class='comment'>// Just put it back.</span>
