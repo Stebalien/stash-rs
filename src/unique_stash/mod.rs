@@ -305,7 +305,7 @@ impl<V> UniqueStash<V> {
     ///
     /// Returns an iterator that yields `(index, &value)` pairs.
     #[inline]
-    pub fn iter<'a>(&'a self) -> Iter<'a, V> {
+    pub fn iter(&self) -> Iter<V> {
         Iter {
             len: self.len(),
             inner: self.data.iter().enumerate(),
@@ -316,7 +316,7 @@ impl<V> UniqueStash<V> {
     ///
     /// Returns an iterator that yields `(index, &mut value)` pairs.
     #[inline]
-    pub fn iter_mut<'a>(&'a mut self) -> IterMut<'a, V> {
+    pub fn iter_mut(&mut self) -> IterMut<V> {
         IterMut {
             len: self.len(),
             inner: self.data.iter_mut().enumerate(),
@@ -325,7 +325,7 @@ impl<V> UniqueStash<V> {
 
     /// Iterate over the values in this `UniqueStash<V>` by reference.
     #[inline]
-    pub fn values<'a>(&'a self) -> Values<'a, V> {
+    pub fn values(&self) -> Values<V> {
         Values {
             len: self.len(),
             inner: self.data.iter(),
@@ -334,7 +334,7 @@ impl<V> UniqueStash<V> {
 
     /// Mutably iterate over the values in this `UniqueStash<V>` by reference.
     #[inline]
-    pub fn values_mut<'a>(&'a mut self) -> ValuesMut<'a, V> {
+    pub fn values_mut(&mut self) -> ValuesMut<V> {
         ValuesMut {
             len: self.len(),
             inner: self.data.iter_mut(),
@@ -369,7 +369,7 @@ impl<V> UniqueStash<V> {
                         *version += 1;
                         self.next_free = index.idx;
                         self.size -= 1;
-                        return Some(value);
+                        Some(value)
                     }
                     empty => {
                         // Just put it back.

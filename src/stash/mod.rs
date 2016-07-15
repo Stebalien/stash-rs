@@ -281,7 +281,7 @@ impl<V> Stash<V> {
     ///
     /// Returns an iterator that yields `(index, &value)` pairs.
     #[inline]
-    pub fn iter<'a>(&'a self) -> Iter<'a, V> {
+    pub fn iter(&self) -> Iter<V> {
         Iter {
             len: self.len(),
             inner: self.data.iter().enumerate(),
@@ -292,7 +292,7 @@ impl<V> Stash<V> {
     ///
     /// Returns an iterator that yields `(index, &mut value)` pairs.
     #[inline]
-    pub fn iter_mut<'a>(&'a mut self) -> IterMut<'a, V> {
+    pub fn iter_mut(&mut self) -> IterMut<V> {
         IterMut {
             len: self.len(),
             inner: self.data.iter_mut().enumerate(),
@@ -301,7 +301,7 @@ impl<V> Stash<V> {
 
     /// Iterate over the values in this `Stash<V>` by reference.
     #[inline]
-    pub fn values<'a>(&'a self) -> Values<'a, V> {
+    pub fn values(&self) -> Values<V> {
         Values {
             len: self.len(),
             inner: self.data.iter(),
@@ -310,7 +310,7 @@ impl<V> Stash<V> {
 
     /// Mutably iterate over the values in this `Stash<V>` by reference.
     #[inline]
-    pub fn values_mut<'a>(&'a mut self) -> ValuesMut<'a, V> {
+    pub fn values_mut(&mut self) -> ValuesMut<V> {
         ValuesMut {
             len: self.len(),
             inner: self.data.iter_mut(),
@@ -375,7 +375,7 @@ impl<V> Stash<V> {
         // Do it this way so that nothing bad happens if a destructor panics.
         for (i, entry) in self.data.iter_mut().enumerate() {
             // Skip if empty.
-            if let &mut Entry::Empty(_) = entry {
+            if let Entry::Empty(_) = *entry {
                 continue;
             }
             // Drops *then* writes. If drop panics, nothing bad happens (we just

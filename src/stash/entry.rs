@@ -16,16 +16,16 @@ pub fn value<V>(entry: Entry<V>) -> Option<V> {
 
 /// Get an optional reference to the value.
 pub fn value_ref<V>(entry: &Entry<V>) -> Option<&V> {
-    match entry {
-        &Full(ref value) => Some(value),
+    match *entry {
+        Full(ref value) => Some(value),
         _ => None
     }
 }
 
 /// Get an optional mutable reference to the value.
 pub fn value_mut<V>(entry: &mut Entry<V>) -> Option<&mut V> {
-    match entry {
-        &mut Full(ref mut value) => Some(value),
+    match *entry {
+        Full(ref mut value) => Some(value),
         _ => None
     }
 }
