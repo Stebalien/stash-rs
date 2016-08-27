@@ -54,3 +54,30 @@ fn insert_delete(b: &mut Bencher) {
         test::black_box(map.remove(&test::black_box(20)));
     });
 }
+
+#[bench]
+fn iter_sparse(b: &mut Bencher) {
+    let mut map = HashMap::new();
+    for i in 0..101 {
+        map.insert(i, "something");
+    }
+    for i in 0..100 {
+        map.remove(&i);
+    }
+    b.iter(|| {
+        test::black_box(test::black_box(&map).iter().next().unwrap());
+    });
+}
+
+#[bench]
+fn iter(b: &mut Bencher) {
+    let mut map = HashMap::new();
+    for i in 0..100 {
+        map.insert(i, "something");
+    }
+    b.iter(|| {
+        for i in test::black_box(&map) {
+            test::black_box(i);
+        }
+    });
+}

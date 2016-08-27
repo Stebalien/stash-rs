@@ -57,3 +57,32 @@ fn insert_delete(b: &mut Bencher) {
         test::black_box(stash.take(test::black_box(tag)));
     });
 }
+
+#[bench]
+fn iter_sparse(b: &mut Bencher) {
+    let mut stash = UniqueStash::new();
+    let mut tickets = Vec::new();
+    for _ in 0..100 {
+        tickets.push(stash.put("something"));
+    }
+    stash.put("something");
+    for t in tickets {
+        stash.take(t);
+    }
+    b.iter(|| {
+        test::black_box(test::black_box(&stash).iter().next().unwrap());
+    });
+}
+
+#[bench]
+fn iter(b: &mut Bencher) {
+    let mut stash = UniqueStash::new();
+    for _ in 0..100 {
+        stash.put("something");
+    }
+    b.iter(|| {
+        for i in test::black_box(&stash) {
+            test::black_box(i);
+        }
+    });
+}
