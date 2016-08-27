@@ -1,15 +1,36 @@
 use std::fmt;
 use std::vec;
 use std::iter;
+use std::str::FromStr;
 use std::ops::{Index, IndexMut};
 use std::slice;
 use std::mem;
+use std::error::Error;
 
 use self::entry::{VerEntry, Entry};
 
 mod entry;
 
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct TagParseError;
+
+impl Error for TagParseError {
+    fn description(&self) -> &str {
+        "failed to parse tag"
+    }
+}
+
+impl fmt::Display for TagParseError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str(self.description())
+    }
+}
+
+
 /// A versioned index into a `UniqueStash`.
+///
+/// Can be converted to and from strings of the form `###/###` (no leading
+/// zeros). Every tag has exactly one valid string representation.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct Tag {
     idx: usize,
@@ -25,6 +46,26 @@ impl fmt::Debug for Tag {
 impl fmt::Display for Tag {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}/{}", self.idx, self.ver)
+    }
+}
+impl FromStr for Tag {
+    type Err = TagParseError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut pieces = s.split('/').fuse();
+        if let (Some(first), Some(second), None) = (pieces.next(), pieces.next(), pieces.next()) {
+            // Make sure we only accept one form of tag.
+            if (first.len() > 1 && first.as_bytes()[0] == b'0') || (second.len() > 1 && second.as_bytes()[0] == b'0') {
+                return Err(TagParseError);
+            }
+
+            if let (Ok(index), Ok(version)) = (first.parse(), second.parse()) {
+                return Ok(Tag {
+                    idx: index,
+                    ver: version
+                })
+            }
+        }
+        Err(TagParseError)
     }
 }
 

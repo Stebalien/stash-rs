@@ -2,6 +2,27 @@ extern crate stash;
 use stash::{UniqueStash, Tag};
 
 #[test]
+fn string_conversions() {
+    let mut stash = UniqueStash::new();
+    let tag1 = stash.put(1);
+    let tag2: Tag = tag1.to_string().parse().unwrap();
+    assert_eq!(stash.take(tag2).unwrap(), 1);
+}
+
+#[test]
+fn string_format() {
+    assert!("909/990".parse::<Tag>().is_ok());
+    assert!("0909/990".parse::<Tag>().is_err());
+    assert!("0909/0990".parse::<Tag>().is_err());
+    assert!("909/0990".parse::<Tag>().is_err());
+    assert!("909 /0990".parse::<Tag>().is_err());
+    assert!("909//0990".parse::<Tag>().is_err());
+    assert!("909/0990/".parse::<Tag>().is_err());
+    assert!("/909/0990/".parse::<Tag>().is_err());
+    assert!("/909/0990".parse::<Tag>().is_err());
+}
+
+#[test]
 fn iter() {
     let mut stash = UniqueStash::new();
     stash.extend(0..2).count();
