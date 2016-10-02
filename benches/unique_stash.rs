@@ -34,7 +34,7 @@ fn lookup(b: &mut Bencher) {
     for _ in 0..100 {
         tickets.push(stash.put("something"));
     }
-    let ref t = tickets[20];
+    let t = &tickets[20];
     b.iter(|| {
         test::black_box(&stash[*t]);
     });
