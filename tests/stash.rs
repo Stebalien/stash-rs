@@ -40,3 +40,31 @@ fn get() {
     assert_eq!(stash[indices[2]], 1);
 }
 
+#[test]
+fn reset_zero() {
+    let mut stash1 = Stash::new();
+    for _ in 0..3 {
+      stash1.put (());
+    }
+    stash1.clear();
+    assert_eq!(stash1.len(), 0);
+    let mut stash2 = Stash::new();
+    for _ in 0..4 {
+      assert_eq!(stash1.put (()), stash2.put (()));
+    }
+    for i in 0..4 {
+      stash1.take (i);
+    }
+    for i in 0..4 {
+      stash2.take (3-i);
+    }
+    assert_eq!(stash1.len(), 0);
+    assert_eq!(stash2.len(), 0);
+    let mut stash3 = Stash::new();
+    for _ in 0..5 {
+      let i = stash3.put (());
+      assert_eq!(i, stash1.put(()));
+      assert_eq!(i, stash2.put(()));
+    }
+}
+
