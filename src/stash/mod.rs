@@ -360,6 +360,9 @@ impl<V> Stash<V> {
                 Entry::Full(value) => {
                     self.next_free = index;
                     self.size -= 1;
+                    if self.size == 0 {
+                      self.next_free = 0;
+                    }
                     return Some(value);
                 }
             }
@@ -399,6 +402,7 @@ impl<V> Stash<V> {
             self.next_free = i;
             self.size -= 1;
         }
+        self.next_free = 0;
     }
 }
 
