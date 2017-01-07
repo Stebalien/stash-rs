@@ -41,7 +41,7 @@ fn get() {
 }
 
 #[test]
-fn reset_zero() {
+fn clear_zero() {
     let mut stash1 = Stash::new();
     for _ in 0..3 {
       stash1.put (());
@@ -52,12 +52,8 @@ fn reset_zero() {
     for _ in 0..4 {
       assert_eq!(stash1.put (()), stash2.put (()));
     }
-    for i in 0..4 {
-      stash1.take (i);
-    }
-    for i in 0..4 {
-      stash2.take (3-i);
-    }
+    stash1.clear();
+    stash2.clear();
     assert_eq!(stash1.len(), 0);
     assert_eq!(stash2.len(), 0);
     let mut stash3 = Stash::new();

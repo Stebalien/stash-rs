@@ -351,7 +351,6 @@ impl<V> Stash<V> {
 
     /// Take an item from a slot (if non empty).
     pub fn take(&mut self, index: usize) -> Option<V> {
-        let mut out = None;
         if let Some(entry) = self.data.get_mut(index) {
             match mem::replace(entry, Entry::Empty(self.next_free)) {
                 Entry::Empty(free_slot) => {
@@ -362,17 +361,11 @@ impl<V> Stash<V> {
                 Entry::Full(value) => {
                     self.next_free = index;
                     self.size -= 1;
-                    out = Some(value);
+                    return Some(value);
                 }
             }
         }
-        if let &Some(_) = &out {
-          if self.size == 0 {
-            self.data.clear();
-            self.next_free = 0;
-          }
-        }
-        out
+        None
     }
 
     /// Get a reference to the value at `index`.
