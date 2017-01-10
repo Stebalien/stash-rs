@@ -398,7 +398,8 @@ impl<V> Stash<V> {
         }
     }
 
-    /// Clear the stash
+    /// Clear the stash. Cleared stash will give the same keys as a
+    /// new stash for subsequent puts.
     pub fn clear(&mut self) {
         // Do it this way so that nothing bad happens if a destructor panics.
         for (i, entry) in self.data.iter_mut().enumerate() {
@@ -412,6 +413,8 @@ impl<V> Stash<V> {
             self.next_free = i;
             self.size -= 1;
         }
+        self.data.clear();
+        self.next_free = 0;
     }
 }
 
