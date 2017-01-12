@@ -369,6 +369,7 @@ impl<V> Stash<V> {
                 Entry::Empty(free_slot) => {
                     // Just put it back.
                     *entry = Entry::Empty(free_slot);
+                    return None;
                 }
                 Entry::Full(value) => {
                     self.next_free = index;
