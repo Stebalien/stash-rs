@@ -8,30 +8,43 @@ use test::Bencher;
 use stash::Stash;
 
 #[bench]
-fn bench(b: &mut Bencher) {
-    let mut stash = Stash::new();
+fn put_and_take(b: &mut Bencher) {
+    let mut stash = Stash::with_capacity(6);
     b.iter(|| {
         let t1 = stash.put("something");
         let t2 = stash.put("something");
-        let _ = stash.take(t1);
+        let _  = test::black_box(stash.take(t1).unwrap());
         let t3 = stash.put("something");
         let t4 = stash.put("something");
         let t5 = stash.put("something");
-        let _ = stash.take(t4);
+        let _  = test::black_box(stash.take(t4).unwrap());
         let t6 = stash.put("something");
-        let _ = stash.take(t3);
-        let _ = stash.take(t2);
-        let _ = stash.take(t5);
-        let _ = stash.take(t6);
+        let _  = test::black_box(stash.take(t3).unwrap());
+        let _  = test::black_box(stash.take(t2).unwrap());
+        let _  = test::black_box(stash.take(t5).unwrap());
+        let _  = test::black_box(stash.take(t6).unwrap());
     });
 }
 
 #[bench]
-fn lookup(b: &mut Bencher) {
-    let mut stash = Stash::new();
-    let mut tickets = Vec::new();
-    for _ in 0..100 {
-        tickets.push(stash.put("something"));
+fn put_and_take_unchecked(b: &mut Bencher) {
+    let mut stash = Stash::with_capacity(6);
+    b.iter(|| {
+        let t1 = stash.put("something");
+        let t2 = stash.put("something");
+        let _  = unsafe{ test::black_box(stash.take_unchecked(t1)) };
+        let t3 = stash.put("something");
+        let t4 = stash.put("something");
+        let t5 = stash.put("something");
+        let _  = unsafe{ test::black_box(stash.take_unchecked(t4)) };
+        let t6 = stash.put("something");
+        let _  = unsafe{ test::black_box(stash.take_unchecked(t3)) };
+        let _  = unsafe{ test::black_box(stash.take_unchecked(t2)) };
+        let _  = unsafe{ test::black_box(stash.take_unchecked(t5)) };
+        let _  = unsafe{ test::black_box(stash.take_unchecked(t6)) };
+    });
+}
+
 
 fn setup<'a>() -> (Stash<&'a str>, Vec<usize>) {
     let n = 100;
