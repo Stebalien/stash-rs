@@ -364,20 +364,22 @@ impl<V> Stash<V> {
 
     /// Take an item from a slot (if non empty).
     pub fn take(&mut self, index: usize) -> Option<V> {
-        if let Some(entry) = self.data.get_mut(index) {
-            match mem::replace(entry, Entry::Empty(self.next_free)) {
+        match self.data.get_mut(index) {
+            None => None,
+            Some(entry) => match mem::replace(entry, Entry::Empty(self.next_free)) {
                 Entry::Empty(free_slot) => {
-                    // Just put it back.
                     *entry = Entry::Empty(free_slot);
-                }
+                    None
+                },
                 Entry::Full(value) => {
                     self.next_free = index;
                     self.size -= 1;
-                    return Some(value);
+                    Some(value)
                 }
             }
         }
-        None
+    }
+
     /// Take an item from a slot (if non empty) without bounds or empty checking.
     /// So use it very carefully!
     /// 
