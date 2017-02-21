@@ -96,6 +96,13 @@ fn get_unchecked_mut(b: &mut Bencher) {
     });
 }
 
+#[bench]
+fn ops_index(b: &mut Bencher) {
+    let (stash, tickets) = setup();
+    b.iter(|| {
+        for &i in tickets.iter() {
+            test::black_box(stash[i]);
+        }
     });
 }
 
