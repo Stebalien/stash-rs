@@ -7,6 +7,8 @@
 //!
 //! <sup>†</sup>Blazing means an order of magnitude faster than hash maps and btree maps.
 
+extern crate unreachable;
+
 #[macro_use]
 mod iter_macro;
 
