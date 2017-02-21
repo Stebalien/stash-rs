@@ -280,7 +280,7 @@ impl<V> Stash<V> {
             unsafe {
                 match mem::replace(self.data.get_unchecked_mut(loc), Entry::Full(value)) {
                     Entry::Empty(next_free) => next_free,
-                    _ => unreachable!(),
+                    _ => ::unreachable::unreachable(),
                 }
             }
         };
@@ -364,20 +364,38 @@ impl<V> Stash<V> {
 
     /// Take an item from a slot (if non empty).
     pub fn take(&mut self, index: usize) -> Option<V> {
-        if let Some(entry) = self.data.get_mut(index) {
-            match mem::replace(entry, Entry::Empty(self.next_free)) {
+        match self.data.get_mut(index) {
+            None => None,
+            Some(entry) => match mem::replace(entry, Entry::Empty(self.next_free)) {
                 Entry::Empty(free_slot) => {
-                    // Just put it back.
                     *entry = Entry::Empty(free_slot);
-                }
+                    None
+                },
                 Entry::Full(value) => {
                     self.next_free = index;
                     self.size -= 1;
-                    return Some(value);
+                    Some(value)
                 }
             }
         }
-        None
+    }
+
+    /// Take an item from a slot (if non empty) without bounds or empty checking.
+    /// So use it very carefully!
+    /// 
+    /// This can be safely used as long as the user does not mutate
+    /// `indices` from `put` and is sure not to have taken the value
+    /// associated with the given `index`.
+    #[inline]
+    pub unsafe fn take_unchecked(&mut self, index: usize) -> V {
+        match mem::replace(self.data.get_unchecked_mut(index), Entry::Empty(self.next_free)) {
+            Entry::Empty(_) => ::unreachable::unreachable(),
+            Entry::Full(value) => {
+                self.next_free = index;
+                self.size -= 1;
+                value
+            }
+        }
     }
 
     /// Get a reference to the value at `index`.
@@ -389,12 +407,40 @@ impl<V> Stash<V> {
         }
     }
 
+    /// Get a reference to the value at `index` without bounds or empty checking.
+    /// So use it very carefully!
+    /// 
+    /// This can be safely used as long as the user does not mutate
+    /// `indices` from `put` and is sure not to have taken the value
+    /// associated with the given `index`.
+    #[inline]
+    pub unsafe fn get_unchecked(&self, index: usize) -> &V {
+        match self.data.get_unchecked(index) {
+            &Entry::Full(ref v) => v,
+            _ => ::unreachable::unreachable()
+        }
+    }
+
     /// Get a mutable reference to the value at `index`.
     #[inline]
     pub fn get_mut(&mut self, index: usize) -> Option<&mut V> {
         match self.data.get_mut(index) {
             Some(&mut Entry::Full(ref mut v)) => Some(v),
             _ => None,
+        }
+    }
+
+    /// Get a mutable reference to the value at `index` without bounds or empty checking.
+    /// So use it very carefully!
+    /// 
+    /// This can be safely used as long as the user does not mutate
+    /// `indices` from `put` and is sure not to have taken the value
+    /// associated with the given `index`.
+    #[inline]
+    pub unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut V {
+        match self.data.get_unchecked_mut(index) {
+            &mut Entry::Full(ref mut v) => v,
+            _ => ::unreachable::unreachable()
         }
     }
 
