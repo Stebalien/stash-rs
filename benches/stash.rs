@@ -56,8 +56,46 @@ fn setup<'a>() -> (Stash<&'a str>, Vec<usize>) {
     (stash, tickets)
 }
 
+#[bench]
+fn get(b: &mut Bencher) {
+    let (stash, tickets) = setup();
     b.iter(|| {
-        test::black_box(&stash[*t]);
+        for &t in tickets.iter() {
+            test::black_box(stash.get(t).unwrap());
+        }
+    });
+}
+
+#[bench]
+fn get_unchecked(b: &mut Bencher) {
+    let (stash, tickets) = setup();
+    b.iter(|| {
+        for &t in tickets.iter() {
+            test::black_box(unsafe{ stash.get_unchecked(t) });
+        }
+    });
+}
+
+#[bench]
+fn get_mut(b: &mut Bencher) {
+    let (mut stash, tickets) = setup();
+    b.iter(|| {
+        for &t in tickets.iter() {
+            test::black_box(stash.get_mut(t).unwrap());
+        }
+    });
+}
+
+#[bench]
+fn get_unchecked_mut(b: &mut Bencher) {
+    let (mut stash, tickets) = setup();
+    b.iter(|| {
+        for &t in tickets.iter() {
+            test::black_box(unsafe{ stash.get_unchecked_mut(t) });
+        }
+    });
+}
+
     });
 }
 
