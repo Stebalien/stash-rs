@@ -50,11 +50,7 @@ fn setup<'a>() -> (Stash<&'a str>, Vec<usize>) {
 
 #[bench]
 fn iter_sparse(b: &mut Bencher) {
-    let mut stash = Stash::new();
-    let mut tickets = Vec::new();
-    for _ in 0..100 {
-        tickets.push(stash.put("something"));
-    }
+    let (mut stash, tickets) = setup();
     stash.put("something");
     for t in tickets {
         stash.take(t);
@@ -66,10 +62,7 @@ fn iter_sparse(b: &mut Bencher) {
 
 #[bench]
 fn iter(b: &mut Bencher) {
-    let mut stash = Stash::new();
-    for _ in 0..100 {
-        stash.put("something");
-    }
+    let (stash, _) = setup();
     b.iter(|| {
         for i in test::black_box(&stash) {
             test::black_box(i);
@@ -79,11 +72,7 @@ fn iter(b: &mut Bencher) {
 
 #[bench]
 fn insert_delete(b: &mut Bencher) {
-    let mut stash = Stash::new();
-
-    for _ in 0..100 {
-        stash.put("something");
-    }
+    let (mut stash, _) = setup();
 
     stash.take(10);
     stash.take(50);
