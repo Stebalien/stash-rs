@@ -2,7 +2,7 @@
 
 name = "stash"
 keywords = ["data-structures"]
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Steven Allen <steven@stebalien.com>"]
 
 homepage = "https://github.com/Stebalien/stash-rs"
