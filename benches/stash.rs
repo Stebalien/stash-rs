@@ -32,8 +32,17 @@ fn lookup(b: &mut Bencher) {
     let mut tickets = Vec::new();
     for _ in 0..100 {
         tickets.push(stash.put("something"));
+
+fn setup<'a>() -> (Stash<&'a str>, Vec<usize>) {
+    let n = 100;
+    let mut stash = Stash::with_capacity(n);
+    let mut tickets = Vec::with_capacity(n);
+    for _ in 0..n {
+        tickets.push(stash.put("foo"));
     }
-    let t = &tickets[20];
+    (stash, tickets)
+}
+
     b.iter(|| {
         test::black_box(&stash[*t]);
     });
