@@ -280,7 +280,7 @@ impl<V> Stash<V> {
             unsafe {
                 match mem::replace(self.data.get_unchecked_mut(loc), Entry::Full(value)) {
                     Entry::Empty(next_free) => next_free,
-                    _ => unreachable!(),
+                    _ => ::unreachable::unreachable(),
                 }
             }
         };
