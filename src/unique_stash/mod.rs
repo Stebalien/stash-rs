@@ -471,12 +471,10 @@ impl<V> UniqueStash<V> {
             if let Entry::Empty(_) = item.entry {
                 continue;
             }
-            // Drops *then* writes. If drop panics, nothing bad happens (we just
-            // stop clearing.
-            item.entry = Entry::Empty(self.next_free);
             item.version += 1;
             self.next_free = i;
             self.size -= 1;
+            item.entry = Entry::Empty(self.next_free);
         }
     }
 }

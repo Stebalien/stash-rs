@@ -453,14 +453,17 @@ impl<V> Stash<V> {
             if let Entry::Empty(_) = *entry {
                 continue;
             }
-            // Drops *then* writes. If drop panics, nothing bad happens (we just
-            // stop clearing.
-            *entry = Entry::Empty(self.next_free);
             self.next_free = i;
             self.size -= 1;
+            // Do this last, that way a panic just stops this half way through.
+            *entry = Entry::Empty(self.next_free);
         }
-        self.data.clear();
-        self.next_free = 0;
+        // We've already replaced every element with `Empty` so all destructors
+        // are no-ops. Use `set_len` to avoid traversing the list twice.
+        unsafe {
+            self.data.set_len(0);
+            self.next_free = 0;
+        }
     }
 }
 
