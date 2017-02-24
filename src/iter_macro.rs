@@ -2,10 +2,10 @@ macro_rules! impl_iter {
     (@item_identity, $i:item) => {
         $i
     };
-    ($name:ident, ($($tparm:tt)*), $item:ty, $fun:expr) => {
+    ($name:ident, ($($tparm:tt)*), $item:ty, $fun:expr, ($($wh_clause:tt)*)) => {
         impl_iter! {
             @item_identity,
-            impl $($tparm)* Iterator for $name $($tparm)* {
+            impl $($tparm)* Iterator for $name $($tparm)* $($wh_clause)* {
                 type Item = $item;
 
                 fn next(&mut self) -> Option<Self::Item> {
@@ -32,7 +32,7 @@ macro_rules! impl_iter {
 
         impl_iter! {
             @item_identity,
-            impl $($tparm)* ExactSizeIterator for $name $($tparm)* {
+            impl $($tparm)* ExactSizeIterator for $name $($tparm)* $($wh_clause)* {
                 fn len(&self) -> usize {
                     self.len
                 }
@@ -41,7 +41,7 @@ macro_rules! impl_iter {
 
         impl_iter! {
             @item_identity,
-            impl $($tparm)* DoubleEndedIterator for $name $($tparm)* {
+            impl $($tparm)* DoubleEndedIterator for $name $($tparm)* $($wh_clause)* {
                 fn next_back(&mut self) -> Option<Self::Item> {
                     let item = (&mut self.inner).rev().filter_map($fun).next();
                     if item.is_some() {

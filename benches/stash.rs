@@ -9,7 +9,7 @@ use stash::Stash;
 
 #[bench]
 fn put_and_take(b: &mut Bencher) {
-    let mut stash = Stash::with_capacity(6);
+    let mut stash: Stash<&str, usize> = Stash::with_capacity(6);
     b.iter(|| {
         let t1 = stash.put("something");
         let t2 = stash.put("something");
@@ -28,7 +28,7 @@ fn put_and_take(b: &mut Bencher) {
 
 #[bench]
 fn put_and_take_unchecked(b: &mut Bencher) {
-    let mut stash = Stash::with_capacity(6);
+    let mut stash: Stash<&str, usize> = Stash::with_capacity(6);
     b.iter(|| {
         let t1 = stash.put("something");
         let t2 = stash.put("something");
@@ -47,7 +47,7 @@ fn put_and_take_unchecked(b: &mut Bencher) {
 
 #[bench]
 fn put_and_take_block(b: &mut Bencher) {
-    let mut stash = Stash::with_capacity(10);
+    let mut stash: Stash<&str, usize> = Stash::with_capacity(10);
     b.iter(|| {
         let t0 = stash.put("something");
         let t1 = stash.put("something");
@@ -94,7 +94,7 @@ fn put_and_take_block(b: &mut Bencher) {
 
 #[bench]
 fn put_and_take_unchecked_block(b: &mut Bencher) {
-    let mut stash = Stash::with_capacity(10);
+    let mut stash: Stash<&str, usize> = Stash::with_capacity(10);
     b.iter(|| {
         let t0 = stash.put("something");
         let t1 = stash.put("something");

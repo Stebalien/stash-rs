@@ -151,13 +151,13 @@ pub struct IntoValues<V> {
     len: usize,
 }
 
-impl_iter!(Values, (<'a, V>), &'a V, entry::value_ref);
-impl_iter!(ValuesMut, (<'a, V>), &'a mut V, entry::value_mut);
-impl_iter!(IntoValues, (<V>), V, entry::value);
+impl_iter!(Values, (<'a, V>), &'a V, entry::value_ref, ());
+impl_iter!(ValuesMut, (<'a, V>), &'a mut V, entry::value_mut, ());
+impl_iter!(IntoValues, (<V>), V, entry::value, ());
 
-impl_iter!(Iter, (<'a, V>), (Tag, &'a V), entry::value_index_ref);
-impl_iter!(IterMut, (<'a, V>), (Tag, &'a mut V), entry::value_index_mut);
-impl_iter!(IntoIter, (<V>), (Tag, V), entry::value_index);
+impl_iter!(Iter, (<'a, V>), (Tag, &'a V), entry::value_index_ref, ());
+impl_iter!(IterMut, (<'a, V>), (Tag, &'a mut V), entry::value_index_mut, ());
+impl_iter!(IntoIter, (<V>), (Tag, V), entry::value_index, ());
 
 /// An `O(1)` amortized table that does not reuse keys.
 ///
