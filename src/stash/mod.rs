@@ -133,7 +133,7 @@ pub struct Stash<V, Ix = usize> {
 impl<V> Stash<V, usize> {
     /// Constructs a new, empty `Stash<V, usize>`.
     ///
-    /// This is a convenience method. Use `Stash::with_capacity` or `Stash::default` for
+    /// This is a convenience method. Use `Stash::default` for
     /// a constructor that is generic in the type of index used.
     ///
     /// The stash will not allocate until elements are put onto it.
@@ -149,12 +149,13 @@ impl<V> Stash<V, usize> {
     pub fn new() -> Self {
         Stash::with_capacity(0)
     }
-}
 
-impl<V, Ix> Stash<V, Ix>
-    where Ix: Index
-{
-    /// Constructs a new, empty `Stash<V, Ix>` with the specified capacity.
+    /// Constructs a new, empty `Stash<V, usize>` with the specified capacity.
+    ///
+    /// This is a convenience method. Use `Stash::default` for
+    /// a constructor that is generic in the type of index used. In that case
+    /// you can call `reserve` on the newly created stash to specify the
+    /// capacity you need.
     ///
     /// The stash will be able to hold exactly `capacity` elements without
     /// reallocating. If `capacity` is 0, the stash will not allocate.
@@ -169,7 +170,7 @@ impl<V, Ix> Stash<V, Ix>
     /// ```
     /// use stash::Stash;
     ///
-    /// let mut stash: Stash<i32, usize> = Stash::with_capacity(10);
+    /// let mut stash = Stash::with_capacity(10);
     ///
     /// // The stash contains no items, even though it has capacity for more
     /// assert_eq!(stash.len(), 0);
@@ -191,7 +192,11 @@ impl<V, Ix> Stash<V, Ix>
             _marker: marker::PhantomData,
         }
     }
+}
 
+impl<V, Ix> Stash<V, Ix>
+    where Ix: Index
+{
     /// Returns the number of elements the stash can hold without reallocating.
     ///
     /// # Examples
@@ -553,6 +558,11 @@ impl<'a, V, Ix: Index> ops::IndexMut<Ix> for Stash<V, Ix> {
 impl<V, Ix: Index> Default for Stash<V, Ix> {
     #[inline]
     fn default() -> Self {
-        Stash::with_capacity(0)
+        Stash {
+            data: Vec::new(),
+            next_free: 0,
+            size: 0,
+            _marker: marker::PhantomData,
+        }
     }
 }
