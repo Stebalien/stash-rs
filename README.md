@@ -6,3 +6,9 @@ don't need to be able to choose the keys.
 
 Please see the [API](https://stebalien.github.io/stash-rs/stash/)
 documentation for a more detailed description.
+
+# Authors
+
+* Steven Allen <steven@stebalien.com>
+* Robbepop <robbepop@web.de>
+* Shane Pearman <spearman@github.com>
