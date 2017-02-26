@@ -1,3 +1,5 @@
+use index::Index;
+
 #[derive(Clone)]
 pub enum Entry<V> {
     Empty(usize /* next free index */),
@@ -30,23 +32,23 @@ pub fn value_mut<V>(entry: &mut Entry<V>) -> Option<&mut V> {
     }
 }
 
-pub fn value_index_ref<V>((i, entry): (usize, &Entry<V>)) -> Option<(usize, &V)> {
+pub fn value_index_ref<V, Ix: Index>((i, entry): (usize, &Entry<V>)) -> Option<(Ix, &V)> {
     match *entry {
-        Full(ref value) => Some((i, value)),
+        Full(ref value) => Some((Ix::from_usize(i), value)),
         Empty(_) => None,
     }
 }
 
-pub fn value_index_mut<V>((i, entry): (usize, &mut Entry<V>)) -> Option<(usize, &mut V)> {
+pub fn value_index_mut<V, Ix: Index>((i, entry): (usize, &mut Entry<V>)) -> Option<(Ix, &mut V)> {
     match *entry {
-        Full(ref mut value) => Some((i, value)),
+        Full(ref mut value) => Some((Ix::from_usize(i), value)),
         Empty(_) => None,
     }
 }
 
-pub fn value_index<V>((i, entry): (usize, Entry<V>)) -> Option<(usize, V)> {
+pub fn value_index<V, Ix: Index>((i, entry): (usize, Entry<V>)) -> Option<(Ix, V)> {
     match entry {
-        Full(value) => Some((i, value)),
+        Full(value) => Some((Ix::from_usize(i), value)),
         Empty(_) => None,
     }
 }

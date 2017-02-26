@@ -12,9 +12,12 @@ extern crate unreachable;
 #[macro_use]
 mod iter_macro;
 
+pub mod index;
 pub mod stash;
 pub mod unique_stash;
 
+#[doc(inline)]
+pub use index::Index;
 #[doc(inline)]
 pub use stash::Stash;
 #[doc(inline)]
