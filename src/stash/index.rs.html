@@ -4,10 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `src/lib.rs`.">
+    <meta name="description" content="Source to the Rust file `src/index.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
-    <title>lib.rs.html -- source</title>
+    <title>index.rs.html -- source</title>
 
     <link rel="stylesheet" type="text/css" href="../../normalize.css">
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
@@ -65,33 +65,29 @@
 <span id="20">20</span>
 <span id="21">21</span>
 <span id="22">22</span>
-<span id="23">23</span>
-<span id="24">24</span>
 </pre><pre class='rust '>
-<span class='doccomment'>//! Stash is a library for efficiently storing maps of keys to values when one</span>
-<span class='doccomment'>//! doesn&#39;t care what the keys are but wants blazing&lt;sup&gt;†&lt;/sup&gt; fast `O(1)`</span>
-<span class='doccomment'>//! insertions, deletions, and lookups.</span>
-<span class='doccomment'>//!</span>
-<span class='doccomment'>//! Common use cases include file descriptor tables, session tables, or MIO</span>
-<span class='doccomment'>//! context tables.</span>
-<span class='doccomment'>//!</span>
-<span class='doccomment'>//! &lt;sup&gt;†&lt;/sup&gt;Blazing means an order of magnitude faster than hash maps and btree maps.</span>
+<span class='doccomment'>/// Every index type to be used with Stash needs to implement this trait</span>
+<span class='kw'>pub</span> <span class='kw'>trait</span> <span class='ident'>Index</span> {
+    <span class='doccomment'>/// Create an index from `usize`.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// This method should panic if `idx` is out of acceptable range.</span>
+    <span class='kw'>fn</span> <span class='ident'>from_usize</span>(<span class='ident'>idx</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='self'>Self</span>;
 
-<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>unreachable</span>;
+    <span class='doccomment'>/// Turn this index into `usize`</span>
+    <span class='kw'>fn</span> <span class='ident'>into_usize</span>(<span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>usize</span>;
+}
 
-<span class='attribute'>#[<span class='ident'>macro_use</span>]</span>
-<span class='kw'>mod</span> <span class='ident'>iter_macro</span>;
-
-<span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>index</span>;
-<span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>stash</span>;
-<span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>unique_stash</span>;
-
-<span class='attribute'>#[<span class='ident'>doc</span>(<span class='ident'>inline</span>)]</span>
-<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>index</span>::<span class='ident'>Index</span>;
-<span class='attribute'>#[<span class='ident'>doc</span>(<span class='ident'>inline</span>)]</span>
-<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>stash</span>::<span class='ident'>Stash</span>;
-<span class='attribute'>#[<span class='ident'>doc</span>(<span class='ident'>inline</span>)]</span>
-<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>unique_stash</span>::{<span class='ident'>UniqueStash</span>, <span class='ident'>Tag</span>};
+<span class='comment'>// Auto implement this for types equivalent to `usize`.</span>
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> <span class='ident'>Index</span> <span class='kw'>for</span> <span class='ident'>T</span>
+    <span class='kw'>where</span> <span class='ident'>T</span>: <span class='ident'>From</span><span class='op'>&lt;</span><span class='ident'>usize</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>Into</span><span class='op'>&lt;</span><span class='ident'>usize</span><span class='op'>&gt;</span>
+{
+    <span class='kw'>fn</span> <span class='ident'>from_usize</span>(<span class='ident'>idx</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='self'>Self</span> {
+        <span class='ident'>From</span>::<span class='ident'>from</span>(<span class='ident'>idx</span>)
+    }
+    <span class='kw'>fn</span> <span class='ident'>into_usize</span>(<span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>usize</span> {
+        <span class='ident'>Into</span>::<span class='ident'>into</span>(<span class='self'>self</span>)
+    }
+}
 </pre>
 </section>
     <section id='search' class="content hidden"></section>

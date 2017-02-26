@@ -1,0 +1,1 @@
+initSidebarItems({"trait":[["Index","Every index type to be used with Stash needs to implement this trait"]]});

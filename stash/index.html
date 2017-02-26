@@ -48,7 +48,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a class='srclink' href='../src/stash/lib.rs.html#1-21' title='goto source code'>[src]</a></span></h1>
+               </span><a class='srclink' href='../src/stash/lib.rs.html#1-24' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Stash is a library for efficiently storing maps of keys to values when one
 doesn&#39;t care what the keys are but wants blazing<sup>†</sup> fast <code>O(1)</code>
 insertions, deletions, and lookups.</p>
@@ -59,6 +59,13 @@ context tables.</p>
 <p><sup>†</sup>Blazing means an order of magnitude faster than hash maps and btree maps.</p>
 </div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
 <table>
+                       <tr class=' module-item'>
+                           <td><a class='mod' href='index/index.html'
+                                  title='mod stash::index'>index</a></td>
+                           <td class='docblock-short'>
+                                
+                           </td>
+                       </tr>
                        <tr class=' module-item'>
                            <td><a class='mod' href='stash/index.html'
                                   title='mod stash::stash'>stash</a></td>
@@ -93,6 +100,14 @@ context tables.</p>
                                   title='struct stash::UniqueStash'>UniqueStash</a></td>
                            <td class='docblock-short'>
                                 <p>An <code>O(1)</code> amortized table that does not reuse keys.</p>
+                           </td>
+                       </tr></table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class='trait' href='trait.Index.html'
+                                  title='trait stash::Index'>Index</a></td>
+                           <td class='docblock-short'>
+                                <p>Every index type to be used with Stash needs to implement this trait</p>
                            </td>
                        </tr></table></section>
     <section id='search' class="content hidden"></section>
