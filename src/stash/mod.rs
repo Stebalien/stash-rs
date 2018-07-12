@@ -283,6 +283,15 @@ impl<V, Ix> Stash<V, Ix>
         }
     }
 
+    /// Get the index that would be returned from next call to `put`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the size of the `Stash<V, Ix>` would overflow the `Ix` index type.
+    pub fn next_index(&self) -> Ix {
+        Ix::from_usize(self.next_free)
+    }
+
     /// Put a value into the stash.
     ///
     /// Returns the index at which this value was stored.
