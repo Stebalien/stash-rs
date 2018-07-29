@@ -168,6 +168,7 @@ impl_iter!(IntoIter, (<V>), (Tag, V), entry::value_index, ());
 /// An example use case is a session table where expired session IDs should
 /// never be re-used.
 #[derive(Clone)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub struct UniqueStash<V> {
     data: Vec<VerEntry<V>>,
     size: usize,

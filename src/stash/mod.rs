@@ -121,6 +121,7 @@ impl_iter!(IntoIter, (<V, Ix>), (Ix, V), entry::value_index, (where Ix: Index));
 ///
 /// An example use case is a file descriptor table.
 #[derive(Clone)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub struct Stash<V, Ix = usize> {
     data: Vec<Entry<V>>,
     size: usize,

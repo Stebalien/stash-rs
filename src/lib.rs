@@ -9,6 +9,13 @@
 
 extern crate unreachable;
 
+#[cfg(serialization)]
+extern crate serde;
+
+#[cfg(feature = "serialization")]
+#[macro_use]
+extern crate serde_derive;
+
 #[macro_use]
 mod iter_macro;
 
