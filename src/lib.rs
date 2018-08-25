@@ -9,7 +9,8 @@
 
 extern crate unreachable;
 
-#[cfg(serialization)]
+#[cfg(feature = "serialization")]
+#[macro_use]
 extern crate serde;
 
 #[cfg(feature = "serialization")]

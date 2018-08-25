@@ -20,3 +20,7 @@ serialization = ["serde", "serde_derive"]
 unreachable = "0.1.1"
 serde = { version = "1", optional = true }
 serde_derive = { version = "1", optional = true }
+
+
+[dev-dependencies]
+bincode="1"
