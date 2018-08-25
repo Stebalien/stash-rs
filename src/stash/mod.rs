@@ -121,7 +121,7 @@ impl_iter!(IntoIter, (<V, Ix>), (Ix, V), entry::value_index, (where Ix: Index));
 ///
 /// An example use case is a file descriptor table.
 #[derive(Clone)]
-#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
+//#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub struct Stash<V, Ix = usize> {
     data: Vec<Entry<V>>,
     size: usize,
@@ -576,3 +576,23 @@ impl<V, Ix: Index> Default for Stash<V, Ix> {
         }
     }
 }
+
+
+
+#[cfg(feature = "serialization")]
+mod serialization {
+    use super::*;
+    use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
+    use std::collections::HashMap;
+
+    impl<V, Ix> Serialize for Stash<V, Ix> where V: Serialize+Clone, Ix: Index {
+        fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+            let mut map = HashMap::new();
+            for (i, v) in self {
+                map.insert(i.into_usize(), v.clone());
+            }
+            map.serialize(serializer)
+        }
+    }
+}
+
