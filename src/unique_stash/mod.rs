@@ -32,6 +32,7 @@ impl fmt::Display for TagParseError {
 /// Can be converted to and from strings of the form `###/###` (no leading
 /// zeros). Every tag has exactly one valid string representation.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub struct Tag {
     idx: usize,
     ver: u64,
@@ -168,7 +169,6 @@ impl_iter!(IntoIter, (<V>), (Tag, V), entry::value_index, ());
 /// An example use case is a session table where expired session IDs should
 /// never be re-used.
 #[derive(Clone)]
-#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub struct UniqueStash<V> {
     data: Vec<VerEntry<V>>,
     size: usize,
@@ -542,5 +542,105 @@ impl<V> Default for UniqueStash<V> {
     #[inline]
     fn default() -> Self {
         UniqueStash::new()
+    }
+}
+
+#[cfg(feature = "serialization")]
+mod serialization {
+    use super::*;
+    use std::marker;
+    use serde::de::{ SeqAccess, Visitor, Deserialize, Deserializer };
+    use serde::ser::{ SerializeSeq, Serialize, Serializer };
+
+    impl<V> Serialize for UniqueStash<V>
+        where
+            V: Serialize,
+    {
+        fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+            let mut seq = serializer.serialize_seq(Some(self.data.len()))?;
+            for ve in &self.data {
+                let option = match ve.entry {
+                    Entry::Full(ref v) => Some((v, ve.version)),
+                    Entry::Empty(_) => None,
+                };
+                seq.serialize_element(&option)?;
+            }
+            seq.end()
+        }
+    }
+
+    impl<'de, V> Deserialize<'de> for UniqueStash<V>
+        where
+            V: Deserialize<'de>,
+    {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+            where
+                D: Deserializer<'de>,
+        {
+            deserializer.deserialize_seq(StashVisitor::new())
+        }
+    }
+
+    struct StashVisitor<V> {
+        _marker: marker::PhantomData<fn(V) -> V>,
+    }
+
+    impl<V> StashVisitor<V> {
+        fn new() -> StashVisitor<V> {
+            StashVisitor {
+                _marker: marker::PhantomData,
+            }
+        }
+    }
+
+    impl<'de, V> Visitor<'de> for StashVisitor<V>
+        where
+            V: Deserialize<'de>,
+    {
+        type Value = UniqueStash<V>;
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            write!(formatter, "a sequence of optional values and versions")
+        }
+
+        fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+            where
+                A: SeqAccess<'de>,
+        {
+            use std::usize;
+            let initial_size = seq.size_hint().unwrap_or(8);
+            let mut data = Vec::with_capacity(initial_size);
+            let mut i = 0usize;
+            let mut next_free = usize::MAX;
+            let mut size = 0usize;
+            let mut first_empty = usize::MAX;
+            while let Some(option) = seq.next_element()? {
+                match option {
+                    Some((v, version)) => {
+                        data.push(VerEntry{entry: Entry::Full(v), version});
+                        size += 1;
+                    }
+                    None => {
+                        if next_free == usize::MAX {
+                            first_empty = i;
+                        }
+                        data.push(VerEntry{entry: Entry::Empty(next_free), version: 0});
+                        next_free = i;
+                    }
+                }
+                i += 1;
+            }
+            // fix the last entry in linked list now that we know total length
+            let final_length = data.len();
+            if let Some(entry) = data.get_mut(first_empty) {
+                if let VerEntry{entry: Entry::Empty(ref mut next), ..} = entry {
+                    *next = final_length;
+                }
+            }
+            Ok(UniqueStash {
+                data,
+                next_free,
+                size,
+            })
+        }
     }
 }

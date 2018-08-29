@@ -121,7 +121,6 @@ impl_iter!(IntoIter, (<V, Ix>), (Ix, V), entry::value_index, (where Ix: Index));
 ///
 /// An example use case is a file descriptor table.
 #[derive(Clone)]
-//#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub struct Stash<V, Ix = usize> {
     data: Vec<Entry<V>>,
     size: usize,
@@ -577,22 +576,105 @@ impl<V, Ix: Index> Default for Stash<V, Ix> {
     }
 }
 
-
-
 #[cfg(feature = "serialization")]
 mod serialization {
     use super::*;
-    use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
-    use std::collections::HashMap;
+    use serde::de::{ SeqAccess, Visitor, Deserialize, Deserializer };
+    use serde::ser::{ SerializeSeq, Serialize, Serializer };
 
-    impl<V, Ix> Serialize for Stash<V, Ix> where V: Serialize+Clone, Ix: Index {
+    impl<V, Ix> Serialize for Stash<V, Ix>
+    where
+        V: Serialize,
+        Ix: Index,
+    {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-            let mut map = HashMap::new();
-            for (i, v) in self {
-                map.insert(i.into_usize(), v.clone());
+            let mut seq = serializer.serialize_seq(Some(self.data.len()))?;
+            for e in &self.data {
+                let option = match e {
+                    Entry::Full(v) => Some(v),
+                    Entry::Empty(_) => None,
+                };
+                seq.serialize_element(&option)?;
             }
-            map.serialize(serializer)
+            seq.end()
+        }
+    }
+
+    impl<'de, V, Ix> Deserialize<'de> for Stash<V, Ix>
+    where
+        V: Deserialize<'de>,
+        Ix: Index,
+    {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            deserializer.deserialize_seq(StashVisitor::new())
+        }
+    }
+
+    struct StashVisitor<V, Ix> {
+        _marker: marker::PhantomData<fn(V) -> Ix>,
+    }
+
+    impl<V, Ix> StashVisitor<V, Ix> {
+        fn new() -> StashVisitor<V, Ix> {
+            StashVisitor {
+                _marker: marker::PhantomData,
+            }
+        }
+    }
+
+    impl<'de, V, Ix> Visitor<'de> for StashVisitor<V, Ix>
+    where
+        V: Deserialize<'de>,
+        Ix: Index,
+    {
+        type Value = Stash<V, Ix>;
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            write!(formatter, "a sequence of optional values")
+        }
+
+        fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+        where
+            A: SeqAccess<'de>,
+        {
+            use std::usize;
+            let initial_size = seq.size_hint().unwrap_or(8);
+            let mut data = Vec::with_capacity(initial_size);
+            let mut i = 0usize;
+            let mut next_free = usize::MAX;
+            let mut size = 0usize;
+            let mut first_empty = usize::MAX;
+            while let Some(option) = seq.next_element()? {
+                match option {
+                    Some(v) => {
+                        data.push(Entry::Full(v));
+                        size += 1;
+                    }
+                    None => {
+                        if next_free == usize::MAX {
+                            first_empty = i;
+                        }
+                        data.push(Entry::Empty(next_free));
+                        next_free = i;
+                    }
+                }
+                i += 1;
+            }
+            // fix the last entry in linked list now that we know total length
+            let final_length = data.len();
+            if let Some(entry) = data.get_mut(first_empty) {
+                if let Entry::Empty(ref mut next) = entry {
+                    *next = final_length;
+                }
+            }
+            Ok(Stash {
+                data,
+                next_free,
+                size,
+                _marker: marker::PhantomData,
+            })
         }
     }
 }
-

@@ -3,7 +3,6 @@ use self::Entry::*;
 use std::mem;
 
 #[derive(Clone)]
-#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub enum Entry<V> {
     Full(V),
     Empty(usize),
@@ -11,7 +10,6 @@ pub enum Entry<V> {
 
 // TODO: Use a union so we don't pay for a tag *and* a version...
 #[derive(Clone)]
-#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub struct VerEntry<V> {
     pub version: u64,
     pub entry: Entry<V>,
