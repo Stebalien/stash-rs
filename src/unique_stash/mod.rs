@@ -560,10 +560,10 @@ mod serialization {
             let mut seq = serializer.serialize_seq(Some(self.data.len()))?;
             for ve in &self.data {
                 let option = match ve.entry {
-                    Entry::Full(ref v) => Some((v, ve.version)),
+                    Entry::Full(ref v) => Some(v),
                     Entry::Empty(_) => None,
                 };
-                seq.serialize_element(&option)?;
+                seq.serialize_element(&(ve.version, option))?;
             }
             seq.end()
         }
@@ -613,9 +613,9 @@ mod serialization {
             let mut next_free = usize::MAX;
             let mut size = 0usize;
             let mut first_empty = usize::MAX;
-            while let Some(option) = seq.next_element()? {
+            while let Some((version, option)) = seq.next_element()? {
                 match option {
-                    Some((v, version)) => {
+                    Some(v) => {
                         data.push(VerEntry{entry: Entry::Full(v), version});
                         size += 1;
                     }
@@ -623,7 +623,7 @@ mod serialization {
                         if next_free == usize::MAX {
                             first_empty = i;
                         }
-                        data.push(VerEntry{entry: Entry::Empty(next_free), version: 0});
+                        data.push(VerEntry{entry: Entry::Empty(next_free), version});
                         next_free = i;
                     }
                 }
