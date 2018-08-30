@@ -12,3 +12,4 @@ documentation for a more detailed description.
 * Steven Allen <steven@stebalien.com>
 * Robbepop <robbepop@web.de>
 * Shane Pearman <spearman@github.com>
+* Simon Persson <simon.persson@mykolab.com>
