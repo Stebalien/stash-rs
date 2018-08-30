@@ -1,4 +1,5 @@
 extern crate stash;
+extern crate bincode;
 use stash::{UniqueStash, Tag};
 
 #[test]
@@ -93,4 +94,61 @@ fn no_reuse() {
     assert_eq!(stash.len(), 1);
     assert_eq!(stash.take(tag3), Some(4));
     assert_eq!(stash.len(), 0);
+}
+
+#[cfg(feature = "serialization")]
+#[test]
+fn serialize_empty() {
+    let mut stash1 = UniqueStash::new();
+    for a in 0..10 {
+        stash1.put(a);
+    }
+    stash1.clear();
+
+    let bytes = bincode::serialize(&stash1).unwrap();
+    let stash2: UniqueStash<i32> = bincode::deserialize(&bytes).unwrap();
+
+    assert_eq!(stash1.len(), stash2.len());
+    let vec1: Vec<_> = stash1.iter().collect();
+    let vec2: Vec<_> = stash2.iter().collect();
+    assert_eq!(vec1, vec2);
+}
+
+#[cfg(feature = "serialization")]
+#[test]
+fn serialize_half() {
+    let mut stash1 = UniqueStash::new();
+    let mut tags = Vec::new();
+    for a in 0..10 {
+        tags.push(stash1.put(a));
+    }
+
+    stash1.take(tags[0]);
+    stash1.take(tags[3]);
+    stash1.take(tags[9]);
+
+    let bytes = bincode::serialize(&stash1).unwrap();
+    let stash2: UniqueStash<i32> = bincode::deserialize(&bytes).unwrap();
+
+    assert_eq!(stash1.len(), stash2.len());
+    let vec1: Vec<_> = stash1.iter().collect();
+    let vec2: Vec<_> = stash2.iter().collect();
+    assert_eq!(vec1, vec2);
+}
+
+#[cfg(feature = "serialization")]
+#[test]
+fn serialize_full() {
+    let mut stash1 = UniqueStash::new();
+    for a in 0..10 {
+        stash1.put(a);
+    }
+
+    let bytes = bincode::serialize(&stash1).unwrap();
+    let stash2: UniqueStash<i32> = bincode::deserialize(&bytes).unwrap();
+
+    assert_eq!(stash1.len(), stash2.len());
+    let vec1: Vec<_> = stash1.iter().collect();
+    let vec2: Vec<_> = stash2.iter().collect();
+    assert_eq!(vec1, vec2);
 }
