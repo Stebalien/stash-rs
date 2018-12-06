@@ -17,7 +17,7 @@ description="An amortized `O(1)` table for cases where you don't need to choose 
 serialization = ["serde", "serde_derive"]
 
 [dependencies]
-unreachable = "0.1.1"
+unreachable = "1"
 serde = { version = "1", optional = true }
 serde_derive = { version = "1", optional = true }
 
