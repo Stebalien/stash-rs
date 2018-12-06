@@ -8,7 +8,7 @@ use std::mem;
 
 mod entry;
 use self::entry::Entry;
-use index::Index;
+use crate::index::Index;
 
 pub struct Extend<'a, I, Ix>
     where I: Iterator,

@@ -1,4 +1,4 @@
-use index::Index;
+use crate::index::Index;
 
 #[derive(Clone)]
 pub enum Entry<V> {

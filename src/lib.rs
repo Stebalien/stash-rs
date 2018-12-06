@@ -27,8 +27,8 @@ pub mod stash;
 pub mod unique_stash;
 
 #[doc(inline)]
-pub use index::Index;
+pub use crate::index::Index;
 #[doc(inline)]
-pub use stash::Stash;
+pub use crate::stash::Stash;
 #[doc(inline)]
-pub use unique_stash::{UniqueStash, Tag};
+pub use crate::unique_stash::{UniqueStash, Tag};
