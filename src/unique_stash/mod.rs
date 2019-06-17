@@ -33,6 +33,7 @@ impl fmt::Display for TagParseError {
 ///
 /// Can be converted to and from strings of the form `###/###` (no leading
 /// zeros). Every tag has exactly one valid string representation.
+/// Uses 64 bits for storing the version.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub struct Tag {
@@ -74,7 +75,7 @@ impl FromStr for Tag {
 
 impl UniqueIndex for Tag {
     const VERSION_BITS: u8 = 64;
-    fn new_index(idx: usize, ver: u64) -> Self {
+    fn new(idx: usize, ver: u64) -> Self {
         Tag{idx, ver}
     }
     fn offset(&self) -> usize {
@@ -183,9 +184,13 @@ impl_iter!(Iter, (<'a, V, Ix>), (Ix, &'a V), entry::value_index_ref, (where Ix: 
 impl_iter!(IterMut, (<'a, V, Ix>), (Ix, &'a mut V), entry::value_index_mut, (where Ix: UniqueIndex));
 impl_iter!(IntoIter, (<V, Ix>), (Ix, V), entry::value_index, (where Ix: UniqueIndex));
 
-/// An `O(1)` amortized table that does not reuse keys.
+/// An `O(1)` amortized table that rarely reuses indices.
 ///
-/// Guarantee: No two calls to `put` on the same `UniqueStash` will ever return the same `Key`.
+/// Indices store a version which makes it less likely that an old index (which data has
+/// been removed) can be used, incorrectly, to retrieve new data stored at the same location.
+/// How unlikely that is to happen depends on the type of index used. The default index type, `Tag`,
+/// uses 64 bits for the version. That means you would need to insert and remove data from the
+/// same location in the table more than 18 billion billion times before such a mishap is possible.
 ///
 /// An example use case is a file descriptor table.
 ///
@@ -370,7 +375,7 @@ where
             }
         }
         self.size += 1;
-        Ix::new_index(loc, version)
+        Ix::new(loc, version)
     }
 
     /// Put all items in the iterator into the stash.

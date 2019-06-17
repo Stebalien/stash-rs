@@ -34,7 +34,7 @@ pub fn value_index_ref<V, Ix: UniqueIndex>((i, entry): (usize, &VerEntry<V>)) ->
     let version = entry.version;
     match entry.entry {
         Full(ref value) => {
-            Some((Ix::new_index(i,version), value))
+            Some((Ix::new(i,version), value))
         }
         Empty(_) => None,
     }
@@ -44,7 +44,7 @@ pub fn value_index_mut<V, Ix: UniqueIndex>((i, entry): (usize, &mut VerEntry<V>)
     let version = entry.version;
     match entry.entry {
         Full(ref mut value) => {
-            Some((Ix::new_index(i, version), value))
+            Some((Ix::new(i, version), value))
         }
         Empty(_) => None,
     }
@@ -54,7 +54,7 @@ pub fn value_index<V, Ix: UniqueIndex>((i, entry): (usize, VerEntry<V>)) -> Opti
     let version = entry.version;
     match entry.entry {
         Full(value) => {
-            Some((Ix::new_index(i, version), value))
+            Some((Ix::new(i, version), value))
         }
         Empty(_) => None,
     }

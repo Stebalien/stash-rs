@@ -31,7 +31,7 @@ pub trait UniqueIndex{
     /// Create a new UniqueIndex.
     ///
     /// This method should panic if `offset` is out of acceptable range.
-    fn new_index(offset: usize, version: u64) -> Self;
+    fn new(offset: usize, version: u64) -> Self;
 
     /// get the offset of this index
     fn offset(&self) -> usize;
