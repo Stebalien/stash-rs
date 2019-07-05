@@ -106,12 +106,16 @@ fn serialize_empty() {
     stash1.clear();
 
     let bytes = bincode::serialize(&stash1).unwrap();
-    let stash2: UniqueStash<i32> = bincode::deserialize(&bytes).unwrap();
+    let mut stash2: UniqueStash<i32> = bincode::deserialize(&bytes).unwrap();
 
     assert_eq!(stash1.len(), stash2.len());
     let vec1: Vec<_> = stash1.iter().collect();
     let vec2: Vec<_> = stash2.iter().collect();
     assert_eq!(vec1, vec2);
+
+    //test basic operations on the restored stash.
+    let i = stash2.put(42);
+    assert_eq!(stash2.get(i), Some(&42));
 }
 
 #[cfg(feature = "serialization")]
@@ -128,12 +132,16 @@ fn serialize_half() {
     stash1.take(tags[9]);
 
     let bytes = bincode::serialize(&stash1).unwrap();
-    let stash2: UniqueStash<i32> = bincode::deserialize(&bytes).unwrap();
+    let mut stash2: UniqueStash<i32> = bincode::deserialize(&bytes).unwrap();
 
     assert_eq!(stash1.len(), stash2.len());
     let vec1: Vec<_> = stash1.iter().collect();
     let vec2: Vec<_> = stash2.iter().collect();
     assert_eq!(vec1, vec2);
+
+    //test basic operations on the restored stash.
+    let i = stash2.put(42);
+    assert_eq!(stash2.get(i), Some(&42));
 }
 
 #[cfg(feature = "serialization")]
@@ -145,10 +153,14 @@ fn serialize_full() {
     }
 
     let bytes = bincode::serialize(&stash1).unwrap();
-    let stash2: UniqueStash<i32> = bincode::deserialize(&bytes).unwrap();
+    let mut stash2: UniqueStash<i32> = bincode::deserialize(&bytes).unwrap();
 
     assert_eq!(stash1.len(), stash2.len());
     let vec1: Vec<_> = stash1.iter().collect();
     let vec2: Vec<_> = stash2.iter().collect();
     assert_eq!(vec1, vec2);
+
+    //test basic operations on the restored stash.
+    let i = stash2.put(42);
+    assert_eq!(stash2.get(i), Some(&42));
 }
