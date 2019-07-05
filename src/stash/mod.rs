@@ -639,13 +639,12 @@ mod serialization {
         where
             A: SeqAccess<'de>,
         {
-            use std::usize;
             let initial_size = seq.size_hint().unwrap_or(8);
             let mut data = Vec::with_capacity(initial_size);
-            let mut i = 0usize;
-            let mut next_free = usize::MAX;
-            let mut size = 0usize;
-            let mut first_empty = usize::MAX;
+            let mut i = 0;
+            let mut next_free = 0;
+            let mut size = 0;
+            let mut first_free = None;
             while let Some(option) = seq.next_element()? {
                 match option {
                     Some(v) => {
@@ -653,8 +652,8 @@ mod serialization {
                         size += 1;
                     }
                     None => {
-                        if next_free == usize::MAX {
-                            first_empty = i;
+                        if first_free.is_none() {
+                            first_free = Some(i);
                         }
                         data.push(Entry::Empty(next_free));
                         next_free = i;
@@ -662,12 +661,11 @@ mod serialization {
                 }
                 i += 1;
             }
-            // fix the last entry in linked list now that we know total length
-            let final_length = data.len();
-            if let Some(entry) = data.get_mut(first_empty) {
-                if let Entry::Empty(ref mut next) = entry {
-                    *next = final_length;
-                }
+            // fix the last entry in linked list now that we know total length.
+            if let Some(Entry::Empty(ref mut next)) = first_free.and_then(|e|data.get_mut(e)) {
+                *next = i;
+            } else {
+                next_free = i;
             }
             Ok(Stash {
                 data,
