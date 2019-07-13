@@ -20,3 +20,22 @@ impl<T> Index for T
         Into::into(self)
     }
 }
+
+/// Every index type to be used with UniqueStash needs to implement this trait
+pub trait UniqueIndex{
+    /// Number of bits that this type uses to store index version.
+    ///
+    /// Must be equal to or less than 64.
+    const VERSION_BITS: u8;
+
+    /// Create a new UniqueIndex.
+    ///
+    /// This method should panic if `offset` is out of acceptable range.
+    fn new(offset: usize, version: u64) -> Self;
+
+    /// get the offset of this index
+    fn offset(&self) -> usize;
+
+    /// get the version of this index
+    fn version(&self) -> u64;
+}

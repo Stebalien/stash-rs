@@ -1,4 +1,5 @@
 use std::fmt;
+use std::marker;
 use std::vec;
 use std::iter;
 use std::str::FromStr;
@@ -8,6 +9,7 @@ use std::mem;
 use std::error::Error;
 
 use self::entry::{VerEntry, Entry};
+use crate::index::UniqueIndex;
 
 mod entry;
 
@@ -31,6 +33,7 @@ impl fmt::Display for TagParseError {
 ///
 /// Can be converted to and from strings of the form `###/###` (no leading
 /// zeros). Every tag has exactly one valid string representation.
+/// Uses 64 bits for storing the version.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub struct Tag {
@@ -70,31 +73,47 @@ impl FromStr for Tag {
     }
 }
 
-/// The iterator produced by `Unique::extend`.
-pub struct Extend<'a, I>
-    where I: Iterator,
-          I::Item: 'a
-{
-    iter: I,
-    stash: &'a mut UniqueStash<I::Item>,
+impl UniqueIndex for Tag {
+    const VERSION_BITS: u8 = 64;
+    fn new(idx: usize, ver: u64) -> Self {
+        Tag{idx, ver}
+    }
+    fn offset(&self) -> usize {
+        self.idx
+    }
+    fn version(&self) -> u64 {
+        self.ver
+    }
 }
 
-impl<'a, I> Drop for Extend<'a, I>
+/// The iterator produced by `Unique::extend`.
+pub struct Extend<'a, I, Ix>
     where I: Iterator,
-          I::Item: 'a
+          I::Item: 'a,
+          Ix: UniqueIndex
+{
+    iter: I,
+    stash: &'a mut UniqueStash<I::Item, Ix>,
+}
+
+impl<'a, I, Ix> Drop for Extend<'a, I, Ix>
+    where I: Iterator,
+          I::Item: 'a,
+          Ix: UniqueIndex
 {
     fn drop(&mut self) {
         for _ in self {}
     }
 }
 
-impl<'a, I> Iterator for Extend<'a, I>
+impl<'a, I, Ix> Iterator for Extend<'a, I, Ix>
     where I: Iterator,
-          I::Item: 'a
+          I::Item: 'a,
+          Ix: UniqueIndex
 {
-    type Item = Tag;
+    type Item = Ix;
 
-    fn next(&mut self) -> Option<Tag> {
+    fn next(&mut self) -> Option<Self::Item> {
         self.iter.next().map(|v| self.stash.put(v))
     }
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -102,36 +121,41 @@ impl<'a, I> Iterator for Extend<'a, I>
     }
 }
 
-impl<'a, I> ExactSizeIterator for Extend<'a, I>
+impl<'a, I, Ix> ExactSizeIterator for Extend<'a, I, Ix>
     where I: ExactSizeIterator,
-          I::Item: 'a
+          I::Item: 'a,
+          Ix: UniqueIndex
 {}
 
-impl<'a, I> DoubleEndedIterator for Extend<'a, I>
+impl<'a, I, Ix> DoubleEndedIterator for Extend<'a, I, Ix>
     where I: DoubleEndedIterator,
-          I::Item: 'a
+          I::Item: 'a,
+          Ix: UniqueIndex
 {
-    fn next_back(&mut self) -> Option<Tag> {
+    fn next_back(&mut self) -> Option<Ix> {
         self.iter.next_back().map(|v| self.stash.put(v))
     }
 }
 
 /// Iterator over the `(index, &value)` pairs.
-pub struct Iter<'a, V: 'a> {
+pub struct Iter<'a, V: 'a, Ix> {
     inner: iter::Enumerate<slice::Iter<'a, VerEntry<V>>>,
     len: usize,
+    _marker: marker::PhantomData<fn() -> Ix>,
 }
 
 /// Iterator over the `(index, &mut value)` pairs.
-pub struct IterMut<'a, V: 'a> {
+pub struct IterMut<'a, V: 'a, Ix> {
     inner: iter::Enumerate<slice::IterMut<'a, VerEntry<V>>>,
     len: usize,
+    _marker: marker::PhantomData<fn() -> Ix>,
 }
 
 /// Iterator over the `(index, value)` pairs.
-pub struct IntoIter<V> {
+pub struct IntoIter<V, Ix> {
     inner: iter::Enumerate<vec::IntoIter<VerEntry<V>>>,
     len: usize,
+    _marker: marker::PhantomData<fn() -> Ix>,
 }
 
 /// Iterator over references to the values in the stash.
@@ -156,26 +180,33 @@ impl_iter!(Values, (<'a, V>), &'a V, entry::value_ref, ());
 impl_iter!(ValuesMut, (<'a, V>), &'a mut V, entry::value_mut, ());
 impl_iter!(IntoValues, (<V>), V, entry::value, ());
 
-impl_iter!(Iter, (<'a, V>), (Tag, &'a V), entry::value_index_ref, ());
-impl_iter!(IterMut, (<'a, V>), (Tag, &'a mut V), entry::value_index_mut, ());
-impl_iter!(IntoIter, (<V>), (Tag, V), entry::value_index, ());
+impl_iter!(Iter, (<'a, V, Ix>), (Ix, &'a V), entry::value_index_ref, (where Ix: UniqueIndex));
+impl_iter!(IterMut, (<'a, V, Ix>), (Ix, &'a mut V), entry::value_index_mut, (where Ix: UniqueIndex));
+impl_iter!(IntoIter, (<V, Ix>), (Ix, V), entry::value_index, (where Ix: UniqueIndex));
 
-/// An `O(1)` amortized table that does not reuse keys.
+/// An `O(1)` amortized table that rarely reuses indices.
 ///
-/// Guarantee: No two calls to `put` on the same `UniqueStash` will ever return the same `Key`.
+/// Indices store a version which makes it less likely that an old index (which data has
+/// been removed) can be used, incorrectly, to retrieve new data stored at the same location.
+/// How unlikely that is to happen depends on the type of index used. The default index type, `Tag`,
+/// uses 64 bits for the version. That means you would need to insert and remove data from the
+/// same location in the table more than 18 billion billion times before such a mishap is possible.
 ///
 /// An example use case is a file descriptor table.
 ///
 /// An example use case is a session table where expired session IDs should
 /// never be re-used.
 #[derive(Clone)]
-pub struct UniqueStash<V> {
+pub struct UniqueStash<V, Ix=Tag> {
     data: Vec<VerEntry<V>>,
     size: usize,
     next_free: usize,
+    // add a phantom user of the Ix type to make sure an instance of Stash is bound to one
+    // specific index type, separate calls to put and get can't use different index types.
+    _marker: marker::PhantomData<fn(Ix) -> Ix>,
 }
 
-impl<V> UniqueStash<V> {
+impl<V> UniqueStash<V, Tag> {
     /// Constructs a new, empty `UniqueStash<T>`.
     ///
     /// The stash will not allocate until elements are put onto it.
@@ -226,8 +257,15 @@ impl<V> UniqueStash<V> {
             data: Vec::with_capacity(capacity),
             next_free: 0,
             size: 0,
+            _marker: marker::PhantomData,
         }
     }
+}
+
+impl<V, Ix> UniqueStash<V, Ix>
+where
+    Ix: UniqueIndex,
+{
 
     /// Returns the number of elements the stash can hold without reallocating.
     ///
@@ -318,7 +356,7 @@ impl<V> UniqueStash<V> {
     /// Put a value into the stash.
     ///
     /// Returns the index at which this value was stored.
-    pub fn put(&mut self, value: V) -> Tag {
+    pub fn put(&mut self, value: V) -> Ix {
         let loc = self.next_free;
         debug_assert!(loc <= self.data.len());
 
@@ -337,10 +375,7 @@ impl<V> UniqueStash<V> {
             }
         }
         self.size += 1;
-        Tag {
-            idx: loc,
-            ver: version,
-        }
+        Ix::new(loc, version)
     }
 
     /// Put all items in the iterator into the stash.
@@ -349,7 +384,7 @@ impl<V> UniqueStash<V> {
     /// items are actually inserted as the Iterator is read. If the returned
     /// Iterator is dropped, the rest of the items will be inserted all at once.
     #[inline]
-    pub fn extend<I>(&mut self, iter: I) -> Extend<I>
+    pub fn extend<I>(&mut self, iter: I) -> Extend<I, Ix>
         where I: Iterator<Item = V>
     {
         let (lower, _) = iter.size_hint();
@@ -364,10 +399,11 @@ impl<V> UniqueStash<V> {
     ///
     /// Returns an iterator that yields `(index, &value)` pairs.
     #[inline]
-    pub fn iter(&self) -> Iter<V> {
+    pub fn iter(&self) -> Iter<V, Ix> {
         Iter {
             len: self.len(),
             inner: self.data.iter().enumerate(),
+             _marker: marker::PhantomData,
         }
     }
 
@@ -375,10 +411,11 @@ impl<V> UniqueStash<V> {
     ///
     /// Returns an iterator that yields `(index, &mut value)` pairs.
     #[inline]
-    pub fn iter_mut(&mut self) -> IterMut<V> {
+    pub fn iter_mut(&mut self) -> IterMut<V, Ix> {
         IterMut {
             len: self.len(),
             inner: self.data.iter_mut().enumerate(),
+             _marker: marker::PhantomData,
         }
     }
 
@@ -418,15 +455,13 @@ impl<V> UniqueStash<V> {
     }
 
     /// Take an item from a slot (if non empty).
-    pub fn take(&mut self, index: Tag) -> Option<V> {
-        match self.data.get_mut(index.idx) {
-            Some(&mut VerEntry { ref mut version, ref mut entry }) if *version == index.ver => {
+    pub fn take(&mut self, index: Ix) -> Option<V> {
+        match self.data.get_mut(index.offset()) {
+            Some(&mut VerEntry { ref mut version, ref mut entry }) if *version == index.version() => {
                 match mem::replace(entry, Entry::Empty(self.next_free)) {
                     Entry::Full(value) => {
-                        // Don't bother checking. Won't overflow in any
-                        // reasonable amount of time.
-                        *version += 1;
-                        self.next_free = index.idx;
+                        Self::incr_version(version);
+                        self.next_free = index.offset();
                         self.size -= 1;
                         Some(value)
                     }
@@ -442,9 +477,9 @@ impl<V> UniqueStash<V> {
     }
 
     /// Get a reference to the value at `index`.
-    pub fn get(&self, index: Tag) -> Option<&V> {
-        match self.data.get(index.idx) {
-            Some(&VerEntry { version, entry: Entry::Full(ref value) }) if version == index.ver => {
+    pub fn get(&self, index: Ix) -> Option<&V> {
+        match self.data.get(index.offset()) {
+            Some(&VerEntry { version, entry: Entry::Full(ref value) }) if version == index.version() => {
                 Some(value)
             }
             _ => None,
@@ -452,10 +487,10 @@ impl<V> UniqueStash<V> {
     }
 
     /// Get a mutable reference to the value at `index`.
-    pub fn get_mut(&mut self, index: Tag) -> Option<&mut V> {
-        match self.data.get_mut(index.idx) {
+    pub fn get_mut(&mut self, index: Ix) -> Option<&mut V> {
+        match self.data.get_mut(index.offset()) {
             Some(&mut VerEntry { version, entry: Entry::Full(ref mut value) }) if version ==
-                                                                                  index.ver => {
+                                                                                  index.version() => {
                 Some(value)
             }
             _ => None,
@@ -472,30 +507,41 @@ impl<V> UniqueStash<V> {
             if let Entry::Empty(_) = item.entry {
                 continue;
             }
-            item.version += 1;
+            Self::incr_version(&mut item.version);
             self.next_free = i;
             self.size -= 1;
             item.entry = Entry::Empty(self.next_free);
         }
     }
+
+    #[inline(always)]
+    fn incr_version(version: &mut u64) {
+        let all_ones = (1u128 << Ix::VERSION_BITS) - 1;
+        if *version == all_ones as u64 {
+            *version = 0;
+        } else {
+            *version += 1;
+        }
+    }
 }
 
-impl<V> IntoIterator for UniqueStash<V> {
-    type Item = (Tag, V);
-    type IntoIter = IntoIter<V>;
+impl<V, Ix: UniqueIndex> IntoIterator for UniqueStash<V, Ix> {
+    type Item = (Ix, V);
+    type IntoIter = IntoIter<V, Ix>;
 
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
         IntoIter {
             len: self.len(),
             inner: self.data.into_iter().enumerate(),
+             _marker: marker::PhantomData,
         }
     }
 }
 
-impl<'a, V> IntoIterator for &'a UniqueStash<V> {
-    type Item = (Tag, &'a V);
-    type IntoIter = Iter<'a, V>;
+impl<'a, V, Ix: UniqueIndex> IntoIterator for &'a UniqueStash<V, Ix> {
+    type Item = (Ix, &'a V);
+    type IntoIter = Iter<'a, V, Ix>;
 
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
@@ -503,9 +549,9 @@ impl<'a, V> IntoIterator for &'a UniqueStash<V> {
     }
 }
 
-impl<'a, V> IntoIterator for &'a mut UniqueStash<V> {
-    type Item = (Tag, &'a mut V);
-    type IntoIter = IterMut<'a, V>;
+impl<'a, V, Ix: UniqueIndex> IntoIterator for &'a mut UniqueStash<V, Ix> {
+    type Item = (Ix, &'a mut V);
+    type IntoIter = IterMut<'a, V, Ix>;
 
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
@@ -522,17 +568,17 @@ impl<V> fmt::Debug for UniqueStash<V>
     }
 }
 
-impl<'a, V> Index<Tag> for UniqueStash<V> {
+impl<'a, V, Ix: UniqueIndex> Index<Ix> for UniqueStash<V, Ix> {
     type Output = V;
     #[inline]
-    fn index(&self, index: Tag) -> &V {
+    fn index(&self, index: Ix) -> &V {
         self.get(index).expect("index out of bounds")
     }
 }
 
-impl<'a, V> IndexMut<Tag> for UniqueStash<V> {
+impl<'a, V, Ix: UniqueIndex> IndexMut<Ix> for UniqueStash<V, Ix> {
     #[inline]
-    fn index_mut(&mut self, index: Tag) -> &mut V {
+    fn index_mut(&mut self, index: Ix) -> &mut V {
         self.get_mut(index).expect("index out of bounds")
     }
 }
@@ -541,7 +587,12 @@ impl<'a, V> IndexMut<Tag> for UniqueStash<V> {
 impl<V> Default for UniqueStash<V> {
     #[inline]
     fn default() -> Self {
-        UniqueStash::new()
+        UniqueStash {
+            data: Vec::with_capacity(0),
+            next_free: 0,
+            size: 0,
+            _marker: marker::PhantomData,
+        }
     }
 }
 

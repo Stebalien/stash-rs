@@ -1,4 +1,4 @@
-use super::Tag;
+use crate::index::UniqueIndex;
 use self::Entry::*;
 use std::mem;
 
@@ -30,40 +30,31 @@ pub fn fill<V>(entry: &mut VerEntry<V>, value: V) -> usize {
     }
 }
 
-pub fn value_index_ref<V>((i, entry): (usize, &VerEntry<V>)) -> Option<(Tag, &V)> {
+pub fn value_index_ref<V, Ix: UniqueIndex>((i, entry): (usize, &VerEntry<V>)) -> Option<(Ix, &V)> {
     let version = entry.version;
     match entry.entry {
         Full(ref value) => {
-            Some((Tag {
-                idx: i,
-                ver: version,
-            }, value))
+            Some((Ix::new(i,version), value))
         }
         Empty(_) => None,
     }
 }
 
-pub fn value_index_mut<V>((i, entry): (usize, &mut VerEntry<V>)) -> Option<(Tag, &mut V)> {
+pub fn value_index_mut<V, Ix: UniqueIndex>((i, entry): (usize, &mut VerEntry<V>)) -> Option<(Ix, &mut V)> {
     let version = entry.version;
     match entry.entry {
         Full(ref mut value) => {
-            Some((Tag {
-                idx: i,
-                ver: version,
-            }, value))
+            Some((Ix::new(i, version), value))
         }
         Empty(_) => None,
     }
 }
 
-pub fn value_index<V>((i, entry): (usize, VerEntry<V>)) -> Option<(Tag, V)> {
+pub fn value_index<V, Ix: UniqueIndex>((i, entry): (usize, VerEntry<V>)) -> Option<(Ix, V)> {
     let version = entry.version;
     match entry.entry {
         Full(value) => {
-            Some((Tag {
-                idx: i,
-                ver: version,
-            }, value))
+            Some((Ix::new(i, version), value))
         }
         Empty(_) => None,
     }
