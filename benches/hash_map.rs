@@ -24,8 +24,6 @@ fn bench(b: &mut Bencher) {
     });
 }
 
-
-
 #[bench]
 fn lookup(b: &mut Bencher) {
     let mut map = HashMap::new();

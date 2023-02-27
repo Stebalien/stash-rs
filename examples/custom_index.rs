@@ -4,8 +4,7 @@ use std::u16;
 
 use stash::Stash;
 
-
-#[derive(Clone,Copy,Debug,Eq,Ord,PartialEq,PartialOrd)]
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 struct SmallIndex(u16);
 
 impl stash::Index for SmallIndex {

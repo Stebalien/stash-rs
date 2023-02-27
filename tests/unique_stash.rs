@@ -1,6 +1,6 @@
-extern crate stash;
 extern crate bincode;
-use stash::{UniqueStash, Tag};
+extern crate stash;
+use stash::{Tag, UniqueStash};
 
 #[test]
 fn string_conversions() {

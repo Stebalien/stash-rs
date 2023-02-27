@@ -31,4 +31,4 @@ pub use crate::index::Index;
 #[doc(inline)]
 pub use crate::stash::Stash;
 #[doc(inline)]
-pub use crate::unique_stash::{UniqueStash, Tag};
+pub use crate::unique_stash::{Tag, UniqueStash};

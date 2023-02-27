@@ -1,27 +1,29 @@
 use std::fmt;
-use std::vec;
 use std::iter;
 use std::marker;
+use std::mem;
 use std::ops;
 use std::slice;
-use std::mem;
+use std::vec;
 
 mod entry;
 use self::entry::Entry;
 use crate::index::Index;
 
 pub struct Extend<'a, I, Ix>
-    where I: Iterator,
-          I::Item: 'a,
-          Ix: Index + 'a
+where
+    I: Iterator,
+    I::Item: 'a,
+    Ix: Index + 'a,
 {
     iter: I,
     stash: &'a mut Stash<I::Item, Ix>,
 }
 
 impl<'a, I, Ix: Index> Drop for Extend<'a, I, Ix>
-    where I: Iterator,
-          I::Item: 'a
+where
+    I: Iterator,
+    I::Item: 'a,
 {
     fn drop(&mut self) {
         for _ in self {}
@@ -29,8 +31,9 @@ impl<'a, I, Ix: Index> Drop for Extend<'a, I, Ix>
 }
 
 impl<'a, I, Ix: Index> Iterator for Extend<'a, I, Ix>
-    where I: Iterator,
-          I::Item: 'a
+where
+    I: Iterator,
+    I::Item: 'a,
 {
     type Item = Ix;
 
@@ -43,14 +46,16 @@ impl<'a, I, Ix: Index> Iterator for Extend<'a, I, Ix>
 }
 
 impl<'a, I, Ix: Index> ExactSizeIterator for Extend<'a, I, Ix>
-    where I: ExactSizeIterator,
-          I::Item: 'a
+where
+    I: ExactSizeIterator,
+    I::Item: 'a,
 {
 }
 
 impl<'a, I, Ix: Index> DoubleEndedIterator for Extend<'a, I, Ix>
-    where I: DoubleEndedIterator,
-          I::Item: 'a
+where
+    I: DoubleEndedIterator,
+    I::Item: 'a,
 {
     fn next_back(&mut self) -> Option<Ix> {
         self.iter.next_back().map(|v| self.stash.put(v))
@@ -146,8 +151,13 @@ impl<V> Stash<V, usize> {
     /// let mut stash: Stash<i32> = Stash::new();
     /// ```
     #[inline]
-    pub fn new() -> Self {
-        Stash::with_capacity(0)
+    pub const fn new() -> Self {
+        Stash {
+            data: Vec::new(),
+            next_free: 0,
+            size: 0,
+            _marker: marker::PhantomData,
+        }
     }
 
     /// Constructs a new, empty `Stash<V, usize>` with the specified capacity.
@@ -195,7 +205,8 @@ impl<V> Stash<V, usize> {
 }
 
 impl<V, Ix> Stash<V, Ix>
-    where Ix: Index
+where
+    Ix: Index,
 {
     /// Returns the number of elements the stash can hold without reallocating.
     ///
@@ -329,14 +340,12 @@ impl<V, Ix> Stash<V, Ix>
     /// Iterator is dropped, the rest of the items will be inserted all at once.
     #[inline]
     pub fn extend<I>(&mut self, iter: I) -> Extend<I, Ix>
-        where I: Iterator<Item = V>
+    where
+        I: Iterator<Item = V>,
     {
         let (lower, _) = iter.size_hint();
         self.reserve(lower);
-        Extend {
-            iter: iter,
-            stash: self,
-        }
+        Extend { iter, stash: self }
     }
 
     /// Iterate over the items in this `Stash<V>`.
@@ -407,26 +416,31 @@ impl<V, Ix> Stash<V, Ix>
                 Entry::Empty(free_slot) => {
                     *entry = Entry::Empty(free_slot);
                     None
-                },
+                }
                 Entry::Full(value) => {
                     self.next_free = take_index;
                     self.size -= 1;
                     Some(value)
                 }
-            }
+            },
         }
     }
 
     /// Take an item from a slot (if non empty) without bounds or empty checking.
     /// So use it very carefully!
-    /// 
+    ///
+    /// # Safety
+    ///
     /// This can be safely used as long as the user does not mutate
     /// `indices` from `put` and is sure not to have taken the value
     /// associated with the given `index`.
     #[inline]
     pub unsafe fn take_unchecked(&mut self, index: Ix) -> V {
         let take_index = index.into_usize();
-        match mem::replace(self.data.get_unchecked_mut(take_index), Entry::Empty(self.next_free)) {
+        match mem::replace(
+            self.data.get_unchecked_mut(take_index),
+            Entry::Empty(self.next_free),
+        ) {
             Entry::Empty(_) => ::unreachable::unreachable(),
             Entry::Full(value) => {
                 self.next_free = take_index;
@@ -440,22 +454,24 @@ impl<V, Ix> Stash<V, Ix>
     #[inline]
     pub fn get(&self, index: Ix) -> Option<&V> {
         match self.data.get(index.into_usize()) {
-            Some(&Entry::Full(ref v)) => Some(v),
+            Some(Entry::Full(v)) => Some(v),
             _ => None,
         }
     }
 
     /// Get a reference to the value at `index` without bounds or empty checking.
     /// So use it very carefully!
-    /// 
+    ///
+    /// # Safety
+    ///
     /// This can be safely used as long as the user does not mutate
     /// `indices` from `put` and is sure not to have taken the value
     /// associated with the given `index`.
     #[inline]
     pub unsafe fn get_unchecked(&self, index: Ix) -> &V {
         match self.data.get_unchecked(index.into_usize()) {
-            &Entry::Full(ref v) => v,
-            _ => ::unreachable::unreachable()
+            Entry::Full(v) => v,
+            _ => ::unreachable::unreachable(),
         }
     }
 
@@ -463,22 +479,24 @@ impl<V, Ix> Stash<V, Ix>
     #[inline]
     pub fn get_mut(&mut self, index: Ix) -> Option<&mut V> {
         match self.data.get_mut(index.into_usize()) {
-            Some(&mut Entry::Full(ref mut v)) => Some(v),
+            Some(Entry::Full(v)) => Some(v),
             _ => None,
         }
     }
 
     /// Get a mutable reference to the value at `index` without bounds or empty checking.
     /// So use it very carefully!
-    /// 
+    ///
+    /// # Safety
+    ///
     /// This can be safely used as long as the user does not mutate
     /// `indices` from `put` and is sure not to have taken the value
     /// associated with the given `index`.
     #[inline]
     pub unsafe fn get_unchecked_mut(&mut self, index: Ix) -> &mut V {
         match self.data.get_unchecked_mut(index.into_usize()) {
-            &mut Entry::Full(ref mut v) => v,
-            _ => ::unreachable::unreachable()
+            Entry::Full(v) => v,
+            _ => ::unreachable::unreachable(),
         }
     }
 
@@ -540,15 +558,16 @@ impl<'a, V, Ix: Index> IntoIterator for &'a mut Stash<V, Ix> {
 }
 
 impl<V, Ix> fmt::Debug for Stash<V, Ix>
-    where V: fmt::Debug,
-          Ix: fmt::Debug + Index
+where
+    V: fmt::Debug,
+    Ix: fmt::Debug + Index,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_map().entries(self).finish()
     }
 }
 
-impl<'a, V, Ix: Index> ops::Index<Ix> for Stash<V, Ix> {
+impl<V, Ix: Index> ops::Index<Ix> for Stash<V, Ix> {
     type Output = V;
     #[inline]
     fn index(&self, index: Ix) -> &V {
@@ -556,13 +575,12 @@ impl<'a, V, Ix: Index> ops::Index<Ix> for Stash<V, Ix> {
     }
 }
 
-impl<'a, V, Ix: Index> ops::IndexMut<Ix> for Stash<V, Ix> {
+impl<V, Ix: Index> ops::IndexMut<Ix> for Stash<V, Ix> {
     #[inline]
     fn index_mut(&mut self, index: Ix) -> &mut V {
         self.get_mut(index).expect("index out of bounds")
     }
 }
-
 
 impl<V, Ix: Index> Default for Stash<V, Ix> {
     #[inline]
@@ -579,8 +597,8 @@ impl<V, Ix: Index> Default for Stash<V, Ix> {
 #[cfg(feature = "serialization")]
 mod serialization {
     use super::*;
-    use serde::de::{ SeqAccess, Visitor, Deserialize, Deserializer };
-    use serde::ser::{ SerializeSeq, Serialize, Serializer };
+    use serde::de::{Deserialize, Deserializer, SeqAccess, Visitor};
+    use serde::ser::{Serialize, SerializeSeq, Serializer};
 
     impl<V, Ix> Serialize for Stash<V, Ix>
     where
@@ -662,7 +680,7 @@ mod serialization {
                 i += 1;
             }
             // fix the last entry in linked list now that we know total length.
-            if let Some(Entry::Empty(ref mut next)) = first_free.and_then(|e|data.get_mut(e)) {
+            if let Some(Entry::Empty(next)) = first_free.and_then(|e| data.get_mut(e)) {
                 *next = i;
             } else {
                 next_free = i;

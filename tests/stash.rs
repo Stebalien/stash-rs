@@ -1,5 +1,5 @@
-extern crate stash;
 extern crate bincode;
+extern crate stash;
 use stash::Stash;
 
 #[test]
@@ -45,13 +45,13 @@ fn get() {
 fn clear_zero() {
     let mut stash1 = Stash::new();
     for _ in 0..3 {
-      stash1.put (());
+        stash1.put(());
     }
     stash1.clear();
     assert_eq!(stash1.len(), 0);
     let mut stash2 = Stash::new();
     for _ in 0..4 {
-      assert_eq!(stash1.put (()), stash2.put (()));
+        assert_eq!(stash1.put(()), stash2.put(()));
     }
     stash1.clear();
     stash2.clear();
@@ -59,9 +59,9 @@ fn clear_zero() {
     assert_eq!(stash2.len(), 0);
     let mut stash3 = Stash::new();
     for _ in 0..5 {
-      let i = stash3.put (());
-      assert_eq!(i, stash1.put(()));
-      assert_eq!(i, stash2.put(()));
+        let i = stash3.put(());
+        assert_eq!(i, stash1.put(()));
+        assert_eq!(i, stash2.put(()));
     }
 }
 

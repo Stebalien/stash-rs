@@ -11,7 +11,8 @@ pub trait Index {
 
 // Auto implement this for types equivalent to `usize`.
 impl<T> Index for T
-    where T: From<usize> + Into<usize>
+where
+    T: From<usize> + Into<usize>,
 {
     fn from_usize(idx: usize) -> Self {
         From::from(idx)

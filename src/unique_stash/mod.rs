@@ -1,31 +1,26 @@
+use std::error::Error;
 use std::fmt;
-use std::vec;
 use std::iter;
-use std::str::FromStr;
+use std::mem;
 use std::ops::{Index, IndexMut};
 use std::slice;
-use std::mem;
-use std::error::Error;
+use std::str::FromStr;
+use std::vec;
 
-use self::entry::{VerEntry, Entry};
+use self::entry::{Entry, VerEntry};
 
 mod entry;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct TagParseError;
 
-impl Error for TagParseError {
-    fn description(&self) -> &str {
-        "failed to parse tag"
-    }
-}
+impl Error for TagParseError {}
 
 impl fmt::Display for TagParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str(self.description())
+        f.write_str("failed to parse tag")
     }
 }
-
 
 /// A versioned index into a `UniqueStash`.
 ///
@@ -55,15 +50,17 @@ impl FromStr for Tag {
         let mut pieces = s.split('/').fuse();
         if let (Some(first), Some(second), None) = (pieces.next(), pieces.next(), pieces.next()) {
             // Make sure we only accept one form of tag.
-            if (first.len() > 1 && first.as_bytes()[0] == b'0') || (second.len() > 1 && second.as_bytes()[0] == b'0') {
+            if (first.len() > 1 && first.as_bytes()[0] == b'0')
+                || (second.len() > 1 && second.as_bytes()[0] == b'0')
+            {
                 return Err(TagParseError);
             }
 
             if let (Ok(index), Ok(version)) = (first.parse(), second.parse()) {
                 return Ok(Tag {
                     idx: index,
-                    ver: version
-                })
+                    ver: version,
+                });
             }
         }
         Err(TagParseError)
@@ -72,16 +69,18 @@ impl FromStr for Tag {
 
 /// The iterator produced by `Unique::extend`.
 pub struct Extend<'a, I>
-    where I: Iterator,
-          I::Item: 'a
+where
+    I: Iterator,
+    I::Item: 'a,
 {
     iter: I,
     stash: &'a mut UniqueStash<I::Item>,
 }
 
 impl<'a, I> Drop for Extend<'a, I>
-    where I: Iterator,
-          I::Item: 'a
+where
+    I: Iterator,
+    I::Item: 'a,
 {
     fn drop(&mut self) {
         for _ in self {}
@@ -89,8 +88,9 @@ impl<'a, I> Drop for Extend<'a, I>
 }
 
 impl<'a, I> Iterator for Extend<'a, I>
-    where I: Iterator,
-          I::Item: 'a
+where
+    I: Iterator,
+    I::Item: 'a,
 {
     type Item = Tag;
 
@@ -103,13 +103,16 @@ impl<'a, I> Iterator for Extend<'a, I>
 }
 
 impl<'a, I> ExactSizeIterator for Extend<'a, I>
-    where I: ExactSizeIterator,
-          I::Item: 'a
-{}
+where
+    I: ExactSizeIterator,
+    I::Item: 'a,
+{
+}
 
 impl<'a, I> DoubleEndedIterator for Extend<'a, I>
-    where I: DoubleEndedIterator,
-          I::Item: 'a
+where
+    I: DoubleEndedIterator,
+    I::Item: 'a,
 {
     fn next_back(&mut self) -> Option<Tag> {
         self.iter.next_back().map(|v| self.stash.put(v))
@@ -188,8 +191,12 @@ impl<V> UniqueStash<V> {
     /// let mut stash: UniqueStash<i32> = UniqueStash::new();
     /// ```
     #[inline]
-    pub fn new() -> Self {
-        UniqueStash::with_capacity(0)
+    pub const fn new() -> Self {
+        UniqueStash {
+            data: Vec::new(),
+            next_free: 0,
+            size: 0,
+        }
     }
 
     /// Constructs a new, empty `UniqueStash<T>` with the specified capacity.
@@ -350,14 +357,12 @@ impl<V> UniqueStash<V> {
     /// Iterator is dropped, the rest of the items will be inserted all at once.
     #[inline]
     pub fn extend<I>(&mut self, iter: I) -> Extend<I>
-        where I: Iterator<Item = V>
+    where
+        I: Iterator<Item = V>,
     {
         let (lower, _) = iter.size_hint();
         self.reserve(lower);
-        Extend {
-            iter: iter,
-            stash: self,
-        }
+        Extend { iter, stash: self }
     }
 
     /// Iterate over the items in this `UniqueStash<V>`.
@@ -420,7 +425,7 @@ impl<V> UniqueStash<V> {
     /// Take an item from a slot (if non empty).
     pub fn take(&mut self, index: Tag) -> Option<V> {
         match self.data.get_mut(index.idx) {
-            Some(&mut VerEntry { ref mut version, ref mut entry }) if *version == index.ver => {
+            Some(VerEntry { version, entry }) if *version == index.ver => {
                 match mem::replace(entry, Entry::Empty(self.next_free)) {
                     Entry::Full(value) => {
                         // Don't bother checking. Won't overflow in any
@@ -444,9 +449,10 @@ impl<V> UniqueStash<V> {
     /// Get a reference to the value at `index`.
     pub fn get(&self, index: Tag) -> Option<&V> {
         match self.data.get(index.idx) {
-            Some(&VerEntry { version, entry: Entry::Full(ref value) }) if version == index.ver => {
-                Some(value)
-            }
+            Some(VerEntry {
+                version,
+                entry: Entry::Full(value),
+            }) if *version == index.ver => Some(value),
             _ => None,
         }
     }
@@ -454,10 +460,10 @@ impl<V> UniqueStash<V> {
     /// Get a mutable reference to the value at `index`.
     pub fn get_mut(&mut self, index: Tag) -> Option<&mut V> {
         match self.data.get_mut(index.idx) {
-            Some(&mut VerEntry { version, entry: Entry::Full(ref mut value) }) if version ==
-                                                                                  index.ver => {
-                Some(value)
-            }
+            Some(VerEntry {
+                version,
+                entry: Entry::Full(value),
+            }) if *version == index.ver => Some(value),
             _ => None,
         }
     }
@@ -513,16 +519,16 @@ impl<'a, V> IntoIterator for &'a mut UniqueStash<V> {
     }
 }
 
-
 impl<V> fmt::Debug for UniqueStash<V>
-    where V: fmt::Debug
+where
+    V: fmt::Debug,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_map().entries(self).finish()
     }
 }
 
-impl<'a, V> Index<Tag> for UniqueStash<V> {
+impl<V> Index<Tag> for UniqueStash<V> {
     type Output = V;
     #[inline]
     fn index(&self, index: Tag) -> &V {
@@ -530,13 +536,12 @@ impl<'a, V> Index<Tag> for UniqueStash<V> {
     }
 }
 
-impl<'a, V> IndexMut<Tag> for UniqueStash<V> {
+impl<V> IndexMut<Tag> for UniqueStash<V> {
     #[inline]
     fn index_mut(&mut self, index: Tag) -> &mut V {
         self.get_mut(index).expect("index out of bounds")
     }
 }
-
 
 impl<V> Default for UniqueStash<V> {
     #[inline]
@@ -548,19 +553,19 @@ impl<V> Default for UniqueStash<V> {
 #[cfg(feature = "serialization")]
 mod serialization {
     use super::*;
+    use serde::de::{Deserialize, Deserializer, SeqAccess, Visitor};
+    use serde::ser::{Serialize, SerializeSeq, Serializer};
     use std::marker;
-    use serde::de::{ SeqAccess, Visitor, Deserialize, Deserializer };
-    use serde::ser::{ SerializeSeq, Serialize, Serializer };
 
     impl<V> Serialize for UniqueStash<V>
-        where
-            V: Serialize,
+    where
+        V: Serialize,
     {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             let mut seq = serializer.serialize_seq(Some(self.data.len()))?;
             for ve in &self.data {
-                let option = match ve.entry {
-                    Entry::Full(ref v) => Some(v),
+                let option = match &ve.entry {
+                    Entry::Full(v) => Some(v),
                     Entry::Empty(_) => None,
                 };
                 seq.serialize_element(&(ve.version, option))?;
@@ -570,12 +575,12 @@ mod serialization {
     }
 
     impl<'de, V> Deserialize<'de> for UniqueStash<V>
-        where
-            V: Deserialize<'de>,
+    where
+        V: Deserialize<'de>,
     {
         fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-            where
-                D: Deserializer<'de>,
+        where
+            D: Deserializer<'de>,
         {
             deserializer.deserialize_seq(StashVisitor::new())
         }
@@ -594,8 +599,8 @@ mod serialization {
     }
 
     impl<'de, V> Visitor<'de> for StashVisitor<V>
-        where
-            V: Deserialize<'de>,
+    where
+        V: Deserialize<'de>,
     {
         type Value = UniqueStash<V>;
         fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
@@ -603,8 +608,8 @@ mod serialization {
         }
 
         fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
-            where
-                A: SeqAccess<'de>,
+        where
+            A: SeqAccess<'de>,
         {
             let initial_size = seq.size_hint().unwrap_or(8);
             let mut data = Vec::with_capacity(initial_size);
@@ -615,22 +620,32 @@ mod serialization {
             while let Some((version, option)) = seq.next_element()? {
                 match option {
                     Some(v) => {
-                        data.push(VerEntry{entry: Entry::Full(v), version});
+                        data.push(VerEntry {
+                            entry: Entry::Full(v),
+                            version,
+                        });
                         size += 1;
                     }
                     None => {
                         if first_free.is_none() {
                             first_free = Some(i);
                         }
-                        data.push(VerEntry{entry: Entry::Empty(next_free), version});
+                        data.push(VerEntry {
+                            entry: Entry::Empty(next_free),
+                            version,
+                        });
                         next_free = i;
                     }
                 }
                 i += 1;
             }
             // fix the last entry in linked list now that we know total length
-            let opt = first_free.and_then(|e|data.get_mut(e));
-            if let Some(VerEntry{entry: Entry::Empty(ref mut next), ..}) = opt {
+            let opt = first_free.and_then(|e| data.get_mut(e));
+            if let Some(VerEntry {
+                entry: Entry::Empty(next),
+                ..
+            }) = opt
+            {
                 *next = i;
             } else {
                 next_free = i;

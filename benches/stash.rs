@@ -13,16 +13,16 @@ fn put_and_take(b: &mut Bencher) {
     b.iter(|| {
         let t1 = stash.put("something");
         let t2 = stash.put("something");
-        let _  = test::black_box(stash.take(t1).unwrap());
+        let _ = test::black_box(stash.take(t1).unwrap());
         let t3 = stash.put("something");
         let t4 = stash.put("something");
         let t5 = stash.put("something");
-        let _  = test::black_box(stash.take(t4).unwrap());
+        let _ = test::black_box(stash.take(t4).unwrap());
         let t6 = stash.put("something");
-        let _  = test::black_box(stash.take(t3).unwrap());
-        let _  = test::black_box(stash.take(t2).unwrap());
-        let _  = test::black_box(stash.take(t5).unwrap());
-        let _  = test::black_box(stash.take(t6).unwrap());
+        let _ = test::black_box(stash.take(t3).unwrap());
+        let _ = test::black_box(stash.take(t2).unwrap());
+        let _ = test::black_box(stash.take(t5).unwrap());
+        let _ = test::black_box(stash.take(t6).unwrap());
     });
 }
 
@@ -32,16 +32,16 @@ fn put_and_take_unchecked(b: &mut Bencher) {
     b.iter(|| {
         let t1 = stash.put("something");
         let t2 = stash.put("something");
-        let _  = unsafe{ test::black_box(stash.take_unchecked(t1)) };
+        let _ = unsafe { test::black_box(stash.take_unchecked(t1)) };
         let t3 = stash.put("something");
         let t4 = stash.put("something");
         let t5 = stash.put("something");
-        let _  = unsafe{ test::black_box(stash.take_unchecked(t4)) };
+        let _ = unsafe { test::black_box(stash.take_unchecked(t4)) };
         let t6 = stash.put("something");
-        let _  = unsafe{ test::black_box(stash.take_unchecked(t3)) };
-        let _  = unsafe{ test::black_box(stash.take_unchecked(t2)) };
-        let _  = unsafe{ test::black_box(stash.take_unchecked(t5)) };
-        let _  = unsafe{ test::black_box(stash.take_unchecked(t6)) };
+        let _ = unsafe { test::black_box(stash.take_unchecked(t3)) };
+        let _ = unsafe { test::black_box(stash.take_unchecked(t2)) };
+        let _ = unsafe { test::black_box(stash.take_unchecked(t5)) };
+        let _ = unsafe { test::black_box(stash.take_unchecked(t6)) };
     });
 }
 
@@ -106,16 +106,16 @@ fn put_and_take_unchecked_block(b: &mut Bencher) {
         let t7 = stash.put("something");
         let t8 = stash.put("something");
         let t9 = stash.put("something");
-        let _ = unsafe{ test::black_box(stash.take_unchecked(t1)) };
-        let _ = unsafe{ test::black_box(stash.take_unchecked(t4)) };
-        let _ = unsafe{ test::black_box(stash.take_unchecked(t3)) };
-        let _ = unsafe{ test::black_box(stash.take_unchecked(t2)) };
-        let _ = unsafe{ test::black_box(stash.take_unchecked(t5)) };
-        let _ = unsafe{ test::black_box(stash.take_unchecked(t6)) };
-        let _ = unsafe{ test::black_box(stash.take_unchecked(t0)) };
-        let _ = unsafe{ test::black_box(stash.take_unchecked(t8)) };
-        let _ = unsafe{ test::black_box(stash.take_unchecked(t9)) };
-        let _ = unsafe{ test::black_box(stash.take_unchecked(t7)) };
+        let _ = unsafe { test::black_box(stash.take_unchecked(t1)) };
+        let _ = unsafe { test::black_box(stash.take_unchecked(t4)) };
+        let _ = unsafe { test::black_box(stash.take_unchecked(t3)) };
+        let _ = unsafe { test::black_box(stash.take_unchecked(t2)) };
+        let _ = unsafe { test::black_box(stash.take_unchecked(t5)) };
+        let _ = unsafe { test::black_box(stash.take_unchecked(t6)) };
+        let _ = unsafe { test::black_box(stash.take_unchecked(t0)) };
+        let _ = unsafe { test::black_box(stash.take_unchecked(t8)) };
+        let _ = unsafe { test::black_box(stash.take_unchecked(t9)) };
+        let _ = unsafe { test::black_box(stash.take_unchecked(t7)) };
         let _ = stash.put("something");
         let _ = stash.put("something");
         let _ = stash.put("something");
@@ -126,16 +126,16 @@ fn put_and_take_unchecked_block(b: &mut Bencher) {
         let _ = stash.put("something");
         let _ = stash.put("something");
         let _ = stash.put("something");
-        let _ = unsafe{ test::black_box(stash.take_unchecked(t4)) };
-        let _ = unsafe{ test::black_box(stash.take_unchecked(t5)) };
-        let _ = unsafe{ test::black_box(stash.take_unchecked(t3)) };
-        let _ = unsafe{ test::black_box(stash.take_unchecked(t1)) };
-        let _ = unsafe{ test::black_box(stash.take_unchecked(t9)) };
-        let _ = unsafe{ test::black_box(stash.take_unchecked(t2)) };
-        let _ = unsafe{ test::black_box(stash.take_unchecked(t6)) };
-        let _ = unsafe{ test::black_box(stash.take_unchecked(t7)) };
-        let _ = unsafe{ test::black_box(stash.take_unchecked(t8)) };
-        let _ = unsafe{ test::black_box(stash.take_unchecked(t0)) };
+        let _ = unsafe { test::black_box(stash.take_unchecked(t4)) };
+        let _ = unsafe { test::black_box(stash.take_unchecked(t5)) };
+        let _ = unsafe { test::black_box(stash.take_unchecked(t3)) };
+        let _ = unsafe { test::black_box(stash.take_unchecked(t1)) };
+        let _ = unsafe { test::black_box(stash.take_unchecked(t9)) };
+        let _ = unsafe { test::black_box(stash.take_unchecked(t2)) };
+        let _ = unsafe { test::black_box(stash.take_unchecked(t6)) };
+        let _ = unsafe { test::black_box(stash.take_unchecked(t7)) };
+        let _ = unsafe { test::black_box(stash.take_unchecked(t8)) };
+        let _ = unsafe { test::black_box(stash.take_unchecked(t0)) };
     });
 }
 
@@ -164,7 +164,7 @@ fn get_unchecked(b: &mut Bencher) {
     let (stash, tickets) = setup();
     b.iter(|| {
         for &t in tickets.iter() {
-            test::black_box(unsafe{ stash.get_unchecked(t) });
+            test::black_box(unsafe { stash.get_unchecked(t) });
         }
     });
 }
@@ -184,7 +184,7 @@ fn get_unchecked_mut(b: &mut Bencher) {
     let (mut stash, tickets) = setup();
     b.iter(|| {
         for &t in tickets.iter() {
-            test::black_box(unsafe{ stash.get_unchecked_mut(t) });
+            test::black_box(unsafe { stash.get_unchecked_mut(t) });
         }
     });
 }

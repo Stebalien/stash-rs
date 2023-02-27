@@ -3,10 +3,10 @@
 extern crate stash;
 extern crate test;
 
-use test::Bencher;
 use std::iter;
+use test::Bencher;
 
-use stash::{UniqueStash, Tag};
+use stash::{Tag, UniqueStash};
 
 #[bench]
 fn put_and_take(b: &mut Bencher) {
@@ -14,16 +14,16 @@ fn put_and_take(b: &mut Bencher) {
     b.iter(|| {
         let t1 = stash.put("something");
         let t2 = stash.put("something");
-        let _  = test::black_box(stash.take(t1).unwrap());
+        let _ = test::black_box(stash.take(t1).unwrap());
         let t3 = stash.put("something");
         let t4 = stash.put("something");
         let t5 = stash.put("something");
-        let _  = test::black_box(stash.take(t4).unwrap());
+        let _ = test::black_box(stash.take(t4).unwrap());
         let t6 = stash.put("something");
-        let _  = test::black_box(stash.take(t3).unwrap());
-        let _  = test::black_box(stash.take(t2).unwrap());
-        let _  = test::black_box(stash.take(t5).unwrap());
-        let _  = test::black_box(stash.take(t6).unwrap());
+        let _ = test::black_box(stash.take(t3).unwrap());
+        let _ = test::black_box(stash.take(t2).unwrap());
+        let _ = test::black_box(stash.take(t5).unwrap());
+        let _ = test::black_box(stash.take(t6).unwrap());
     });
 }
 

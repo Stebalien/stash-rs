@@ -9,7 +9,7 @@ macro_rules! impl_iter {
                 type Item = $item;
 
                 fn next(&mut self) -> Option<Self::Item> {
-                    let item = (&mut self.inner).filter_map($fun).next();
+                    let item = (&mut self.inner).find_map($fun);
                     if item.is_some() {
                         self.len -= 1;
                     }
@@ -43,7 +43,7 @@ macro_rules! impl_iter {
             @item_identity,
             impl $($tparm)* DoubleEndedIterator for $name $($tparm)* $($wh_clause)* {
                 fn next_back(&mut self) -> Option<Self::Item> {
-                    let item = (&mut self.inner).rev().filter_map($fun).next();
+                    let item = (&mut self.inner).rev().find_map($fun);
                     if item.is_some() {
                         self.len -= 1;
                     }
