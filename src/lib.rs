@@ -5,7 +5,16 @@
 //! Common use cases include file descriptor tables, session tables, or MIO
 //! context tables.
 //!
-//! <sup>†</sup>Blazing means an order of magnitude faster than hash maps and btree maps.
+//! <small><sup>†</sup>Blazing means an order of magnitude faster than hash maps and btree maps.</small>
+//!
+//! # Serialization
+//!
+//! A stash can be serialized and deserialized with serde, preserving its _existing_ key/value
+//! mapping. This can be used to save/restore a stash to persistant storage.
+//!
+//! However, in general, stashes make no guarantees on how keys are assigned. If stash **A** is
+//! serialized then deserialized into stash **B**, values inserted into stash **A** will likely be
+//! assigned different keys than values inserted into stash **B**.
 #![cfg_attr(not(any(feature = "std", test)), no_std)]
 
 extern crate alloc;
