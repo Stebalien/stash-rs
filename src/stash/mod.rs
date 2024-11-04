@@ -1,10 +1,10 @@
-use std::fmt;
-use std::iter;
-use std::marker;
-use std::mem;
-use std::ops;
-use std::slice;
-use std::vec;
+use alloc::vec::{self, Vec};
+use core::fmt;
+use core::iter;
+use core::marker;
+use core::mem;
+use core::ops;
+use core::slice;
 
 mod entry;
 use self::entry::Entry;

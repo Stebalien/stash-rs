@@ -6,7 +6,9 @@
 //! context tables.
 //!
 //! <sup>†</sup>Blazing means an order of magnitude faster than hash maps and btree maps.
+#![cfg_attr(not(any(feature = "std", test)), no_std)]
 
+extern crate alloc;
 extern crate unreachable;
 
 #[cfg(test)]
