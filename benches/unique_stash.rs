@@ -3,7 +3,6 @@
 extern crate stash;
 extern crate test;
 
-use std::iter;
 use test::Bencher;
 
 use stash::{Tag, UniqueStash};

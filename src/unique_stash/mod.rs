@@ -1,11 +1,11 @@
-use std::error::Error;
-use std::fmt;
-use std::iter;
-use std::mem;
-use std::ops::{Index, IndexMut};
-use std::slice;
-use std::str::FromStr;
-use std::vec;
+use alloc::vec::{self, Vec};
+use core::error::Error;
+use core::fmt;
+use core::iter;
+use core::mem;
+use core::ops::{Index, IndexMut};
+use core::slice;
+use core::str::FromStr;
 
 use self::entry::{Entry, VerEntry};
 
@@ -553,9 +553,9 @@ impl<V> Default for UniqueStash<V> {
 #[cfg(feature = "serialization")]
 mod serialization {
     use super::*;
+    use core::marker;
     use serde::de::{Deserialize, Deserializer, SeqAccess, Visitor};
     use serde::ser::{Serialize, SerializeSeq, Serializer};
-    use std::marker;
 
     impl<V> Serialize for UniqueStash<V>
     where

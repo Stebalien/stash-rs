@@ -15,11 +15,13 @@ license = "MIT/Apache-2.0"
 description="An amortized `O(1)` table for cases where you don't need to choose the keys and want something faster than a HashTable."
 
 [features]
+default = ["std"]
+std = ["serde/std"]
 serialization = ["serde", "serde_derive"]
 
 [dependencies]
 unreachable = "1"
-serde = { version = "1", optional = true }
+serde = { version = "1", optional = true, default-features = false }
 serde_derive = { version = "1", optional = true }
 
 [dev-dependencies]

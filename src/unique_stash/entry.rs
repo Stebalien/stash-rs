@@ -1,6 +1,6 @@
 use self::Entry::*;
 use super::Tag;
-use std::mem;
+use core::mem;
 
 #[derive(Clone)]
 pub enum Entry<V> {
